@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "tokenizer.h"
 
 #define MAX_STRING_LENGTH 1024  // 1k's probably not enough, but it's a start
@@ -17,6 +18,32 @@ void error( char *msg ) {
 void fatal( char *msg ) {
     fprintf( stderr, "[FATAL]: %s\n", msg );
     exit( 1 );
+}
+//
+//  Malloc/Realloc Helper Functions
+//
+char* allocateLargeString( char *from ) {
+    // Allocate some large amount of memory
+    char *temp = malloc( ( MAX_STRING_LENGTH + 1 ) * sizeof( char ) );
+    if ( temp == NULL ) {
+        // If it failed...
+        char msg[200];
+        sprintf( msg, "Could not allocate %d characters in `%s`.", ( MAX_STRING_LENGTH + 1 ), from );
+        fatal( msg );
+    }
+    return temp;
+}
+
+char* downsizeLargeString( char *string, int length, char *from ) {
+    // Downsize `temp`
+    string = realloc( string, length * sizeof( char ) );
+    if ( string == NULL ) {
+        // If it failed...
+        char msg[200];
+        sprintf( msg, "Could not downsize from %d to %d characters in `parseIdentifier`.", ( MAX_STRING_LENGTH + 1 ), length );
+        fatal( msg );
+    }
+    return string;
 }
 
 //
@@ -43,14 +70,29 @@ char fget( FILE *in ) {
     }
     return c;
 }
-char fpeek( FILE *in ) {
-    char c;
+char fpeekx( FILE *in, int x ) {
+    char *temp = allocateLargeString( "fpeekx" );
+    if ( x > MAX_STRING_LENGTH ) {
+        error( "`fpeekx` can't look more than MAX_STRING_LENGTH characters ahead." );
+        x = MAX_STRING_LENGTH;
+    }
 
-    c = fgetc( in );
-    ungetc( c, in );
-
-    return c;
+    int     i;
+    char    value;
+    for( i = 0; i < x; i++ ) {
+        temp[ i ] = fgetc( in );
+    }
+    value = temp[ i - 1 ];
+    for ( i = i - 1; i >= 0; i-- ) {
+        ungetc( temp[ i ], in );
+    }
+    free( temp );
+    return value;
 }
+char fpeek( FILE *in ) {
+    return fpeekx( in, 1 );
+}
+
 
 //
 //  Character-Based Tests
@@ -73,38 +115,51 @@ int isWhitespace( char c ) {
         c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\f'
     );
 }
+int isQuote( char c ) {
+    return (
+        c == '"' || c == '\''
+    );
+}
 
 //
 //  Composite Parsers
 //
 char* parseIdentifier( FILE *in ) {
+    assert( isAlpha( fpeek( in ) ) );
+
+    char *temp  = allocateLargeString( "parseIdentifier" );
     int  length = 0;
     
-    // Allocate some large amount of memory
-    char *temp = malloc( ( MAX_STRING_LENGTH + 1 ) * sizeof( char ) );
-    if ( temp == NULL ) {
-        // If it failed...
-        char msg[200];
-        sprintf( msg, "Could not allocate %d characters in `parseIdentifier`.", ( MAX_STRING_LENGTH + 1 ) );
-        fatal( msg );
-    }
-
     while ( length < MAX_STRING_LENGTH && isAlphanumeric( fpeek( in ) ) ) {
         temp[ length ]  = fget( in );
         length         += 1;
     }
     temp[ length ] = '\0';  // Null terminated strings.
 
-    // Downsize `temp`
-    temp = realloc( temp, length * sizeof( char ) );
-    if ( temp == NULL ) {
-        // If it failed...
-        char msg[200];
-        sprintf( msg, "Could not downsize from %d to %d characters in `parseIdentifier`.", ( MAX_STRING_LENGTH + 1 ), length );
-        fatal( msg );
+    return downsizeLargeString( temp, length, "parseIdentifier" );
+}
+char* parseString( FILE *in ) {
+    assert( isQuote( fpeek( in ) ) );
+
+    char *temp  = allocateLargeString( "parseString" );
+    int  length = 0;
+
+    char quote = fget( in );
+    while ( length < MAX_STRING_LENGTH && fpeek( in ) != quote && fpeek( in ) != EOF ) {
+        temp[ length ] = fget( in );
+        if ( temp[ length ] == '\\' ) {
+            // Tokens are unescaped
+            temp[ length ] = fget( in );
+        }
+        length += 1;
+    }
+    if ( fpeek( in ) == EOF ) {
+        warn( "`parseString` ran off the end of the file.  Something's unmatched..." );
+    } else {
+        fget( in ); // get the closing quote, and throw it away.
     }
 
-    return temp;
+    return downsizeLargeString( temp, length, "parseString" );
 }
 //
 //  Get Next Token
@@ -116,16 +171,16 @@ Token get_next_token( FILE *in, FILE *log ) {
     char c, next;
     Token token;
 
-    while ( !feof( in ) ) {
-        next = fpeek( in );
+    next = fpeek( in );
+    while ( next != EOF ) {
         if ( isWhitespace( next ) ) {
             fget( in );              // Throw it away, and continue
-            continue;
-        }
-
-        if ( isAlpha( next ) ) {
+        } else if ( isAlpha( next ) ) {
             char *tmp = parseIdentifier( in );
             printf( "`%s` is an identifier!\n", tmp );
+        } else if ( isQuote( next ) ) {
+            char *tmp = parseString( in );
+            printf( "`%s` is a string!\n", tmp );
         } else if ( isNumeric( next ) ) {
             c = fget( in );
             printf( "`%c` is a number!\n", c );
@@ -133,6 +188,7 @@ Token get_next_token( FILE *in, FILE *log ) {
             c = fget( in );
             printf( "`%c` is unknown!\n", c );
         }
+        next = fpeek( in );
     }
     return token;
 }

@@ -1,3 +1,7 @@
-div {
-    color:  red;
+div:after {
+    color:      red;
+    content:    "omg";
+    content:    'this" is harder';
+    content:    'this\' is harder still';
+    content:    "this is also '\" harderer.";
 }
