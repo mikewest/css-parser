@@ -1,4 +1,5 @@
 div:after {
+    // This is a comment.  Sorta.
     color:      red;
     content:    "omg";
     content:    'this" is harder';

@@ -161,6 +161,27 @@ char* parseString( FILE *in ) {
 
     return downsizeLargeString( temp, length, "parseString" );
 }
+char* parseComment( FILE *in ) {
+    assert( fpeek( in ) == '/' );
+
+    char type;
+    char *temp  = allocateLargeString( "parseComment" );
+    int  length = 0;
+    
+    fget( in ); // Throw away leading '/'
+    type = fget( in );
+    if ( type == '*' ) {
+        // Multiline
+    } else if ( type == '/' ) {
+        // Single line
+        while ( length < MAX_STRING_LENGTH && fpeek( in ) != '\r' && fpeek( in ) != '\n' && fpeek( in ) != EOF ) {
+            temp[ length ]  = fget( in );
+            length         += 1;
+        }
+    }
+
+    return downsizeLargeString( temp, length, "parseComment" );
+}
 //
 //  Get Next Token
 //
@@ -175,12 +196,19 @@ Token get_next_token( FILE *in, FILE *log ) {
     while ( next != EOF ) {
         if ( isWhitespace( next ) ) {
             fget( in );              // Throw it away, and continue
+    // Identifiers
         } else if ( isAlpha( next ) ) {
             char *tmp = parseIdentifier( in );
             printf( "`%s` is an identifier!\n", tmp );
+    // Strings
         } else if ( isQuote( next ) ) {
             char *tmp = parseString( in );
             printf( "`%s` is a string!\n", tmp );
+    // Comments
+        } else if ( next == '/' && ( fpeekx( in, 2 ) == '/' || fpeekx( in, 2 ) == '*' ) ) {
+            char *tmp = parseComment( in );
+            printf( "`%s` is a comment!\n", tmp );
+    // Numbers
         } else if ( isNumeric( next ) ) {
             c = fget( in );
             printf( "`%c` is a number!\n", c );
