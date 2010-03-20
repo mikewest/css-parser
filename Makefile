@@ -1,2 +1,5 @@
-tokenize:	main.c tokenizer.c
-	clang -o ./tokenize main.c tokenizer.c
+
+CFILES = main.c logging.c token.c tokenizer.c
+
+tokenize:	$(CFILES)
+	clang -o ./tokenize $(CFILES)
