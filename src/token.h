@@ -24,6 +24,9 @@ typedef enum {
     FUNCTION,           //  {identifier}\(
     INCLUDES,           //  ~=
     DASHMATCH,          //  |=
+    PREFIXMATCH,        //  ^=
+    SUFFIXMATCH,        //  $=
+    SUBSTRINGMATCH,     //  *=
     DELIM               //  Everything else.
 } token_type;
 
@@ -35,8 +38,8 @@ typedef struct {
     FileLocation    *start;
     FileLocation    *end;
     token_type      type;
-    char            *value;
+    wchar_t         *value;
 } Token;
 
-Token* generate_token( char*, token_type, FileLocation*, FileLocation* );
+Token* generate_token( wchar_t*, token_type, FileLocation*, FileLocation* );
 void print_token( Token* );
