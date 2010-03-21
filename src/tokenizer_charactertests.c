@@ -7,7 +7,9 @@ int isAlpha( wchar_t c ) {
     return iswalpha( c );
 }
 int isNumeric( wchar_t c ) {
-    return iswdigit( c );
+    return (
+        iswdigit( c ) || c == L'.'
+    );
 }
 int isAlphanumeric( wchar_t c ) {
     return iswalnum( c );

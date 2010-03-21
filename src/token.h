@@ -1,8 +1,11 @@
 typedef enum {
     IDENTIFIER,         //  {identifier}
+    ATKEYWORD,          //  @{identifier}
+    HASHKEYWORD,        //  #{identifier}
     STRING,             //  {string}
     NUMBER,             //  {num}
     DIMENSION,          //  {num}{identifier}
+    PERCENTAGE,         //  {num}%
     URI,                //  url\({whitespace}{string}{whitespace}\)
                         //  url\({whitespace}([!#$%&*-~]|{nonascii}|{escape})*{whitespace}\)
     UNICODE,            //  u\+[0-9a-f?]{1,6}(-[0-9a-f]{1,6})?
@@ -42,5 +45,6 @@ typedef struct {
     wchar_t         *value;
 } Token;
 
-Token* generate_token( wchar_t*, token_type, FileLocation*, FileLocation* );
+Token* new_token( wchar_t*, token_type, FileLocation*, FileLocation* );
+void free_token( Token* );
 void print_token( Token* );

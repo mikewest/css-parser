@@ -8,13 +8,19 @@
 #include "tokenizer.h"
 
 
-Token* generate_token( wchar_t* value, token_type type, FileLocation* start, FileLocation* end ) {
+Token* new_token( wchar_t* value, token_type type, FileLocation* start, FileLocation* end ) {
     Token *temp = malloc( sizeof( Token ) );
     temp->start = start;
     temp->end   = end;
     temp->type  = type;
     temp->value = value;
     return temp;
+}
+void free_token( Token *t ) {
+    free( t->start );
+    free( t->end );
+    free( t->value );
+    free( t );
 }
 void print_token( Token* t ) {
     wprintf( L"TOKEN: {\n" );

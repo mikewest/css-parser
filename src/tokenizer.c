@@ -12,38 +12,35 @@
 //
 //  Composite Parsers
 //
-wchar_t* parseIdentifier( FILE *in ) {
+int parseIdentifier( FILE *in, wchar_t* temp ) {
     assert( isIdentifierStart( fpeek( in ) ) );
 
-    wchar_t *temp  = allocateLargeString( L"parseIdentifier" );
     int  length = 0;
     
     while ( length < MAX_STRING_LENGTH && isIdentifier( fpeek( in ) ) ) {
         temp[ length ]  = fget( in );
-        length         += 1;
+        length++;
     }
 
     temp[ length ] = L'\0';
-    return downsizeLargeString( temp, length, L"parseIdentifier" );
+    return length;
 }
-wchar_t* parseNumeric( FILE *in ) {
+int parseNumeric( FILE *in, wchar_t* temp) {
     assert( isNumeric( fpeek( in ) ) );
 
-    wchar_t *temp  = allocateLargeString( L"parseNumeric" );
     int  length = 0;
 
     while ( length < MAX_STRING_LENGTH && isNumeric( fpeek( in ) ) ) {
         temp[ length ]  = fget( in );
-        length         += 1;
+        length++;
     }
 
     temp[ length ] = L'\0';
-    return downsizeLargeString( temp, length, L"parseNumeric" );
+    return length;
 }
-wchar_t* parseString( FILE *in ) {
+int parseString( FILE *in, wchar_t* temp  ) {
     assert( isQuote( fpeek( in ) ) );
 
-    wchar_t *temp  = allocateLargeString( L"parseString" );
     int  length = 0;
 
     wchar_t quote = fget( in );
@@ -53,7 +50,7 @@ wchar_t* parseString( FILE *in ) {
             // Tokens are unescaped
             temp[ length ] = fget( in );
         }
-        length += 1;
+        length++;
     }
     if ( fpeek( in ) == WEOF ) {
         warn( L"`parseString` ran off the end of the file.  Something's unmatched..." );
@@ -61,12 +58,11 @@ wchar_t* parseString( FILE *in ) {
         fget( in ); // get the closing quote, and throw it away.
     }
     temp[ length ] = L'\0';
-    return downsizeLargeString( temp, length, L"parseString" );
+    return length;
 }
-wchar_t* parseComment( FILE *in ) {
+int parseComment( FILE *in, wchar_t* temp ) {
     assert( fpeek( in ) == L'/' );
 
-    wchar_t *temp  = allocateLargeString( L"parseComment" );
     int  length = 0;
     
     fget( in ); // Throw away leading '/*'
@@ -76,7 +72,7 @@ wchar_t* parseComment( FILE *in ) {
         if ( temp[ length ] == L'\\' ) {
             temp[ length ] = fget( in );
         }
-        length += 1;
+        length++;
     }
     if ( fpeek( in ) == WEOF ) {
         warn( L"`parseComment` ran off the end of the file.  There's an unmatched `/*`." );
@@ -86,12 +82,11 @@ wchar_t* parseComment( FILE *in ) {
     }
 
     temp[ length ] = L'\0';
-    return downsizeLargeString( temp, length, L"parseComment" );
+    return length;
 }
-wchar_t* parseOperator( FILE *in ) {
+int parseOperator( FILE *in, wchar_t* temp ) {
     assert( isOperator( fpeek( in ) ) );
 
-    wchar_t *temp  = allocateLargeString( L"parseOperator" );
     int  length = 1;
     
     temp[ 0 ] = fget( in ); 
@@ -105,7 +100,7 @@ wchar_t* parseOperator( FILE *in ) {
     }
     
     temp[ length ] = L'\0';
-    return downsizeLargeString( temp, length, L"parseComment" );
+    return length;
 }
 void categorize_known_operators( Token *t ) {
     if ( wcscmp( t->value, L"~=" ) == 0 ) {
@@ -146,24 +141,28 @@ void categorize_known_operators( Token *t ) {
         wprintf( L"`%S` didn't match anything.", t->value );
     }
 }
-wchar_t* parseDelim( FILE *in ) {
-    wchar_t *temp = malloc( 2 * sizeof( wchar_t ) );
+int parseDelim( FILE *in, wchar_t* temp ) {
     temp[ 0 ] = fget( in );
     temp[ 1 ] = L'\0';
-    return temp;    
+    return 1;
 }
 
 //
 //  Given a parsing function, build a Token
 //
-Token* parse( wchar_t *parser( FILE* ), FILE *in, token_type type ) {
+Token* parse( int parser( FILE*, wchar_t* ), FILE *in, token_type type ) {
     FileLocation *start, *end;
-    wchar_t *value;
-    start = getCurrentLocation();
-    value = parser( in );
-    end = getCurrentLocation();
+    
+    wchar_t *temp  = allocateLargeString( L"parse" );
+    int     length = 0;
 
-    return generate_token( value, type, start, end ); 
+    start   = getCurrentLocation();
+    length  = parser( in, temp );
+    end     = getCurrentLocation();
+
+    temp    = downsizeLargeString( temp, length, L"parse" );
+
+    return new_token( temp, type, start, end ); 
 }
 
 
@@ -182,16 +181,23 @@ Token* get_next_token( FILE *in, FILE *log ) {
     //  1.  Throw away whitespace outside of tokens
         if ( isWhitespace( next ) ) {
             fget( in );
-    //  2.  Comments
-        } else if ( next == '/' && fpeekx( in, 2 ) == '*' ) {
-            token = parse( &parseComment, in, COMMENT );
-    //  3.  Strings
+    //  2.  Strings (Before comments, as strings can contain comment-like sequences)
         } else if ( isQuote( next ) ) {
             token = parse( &parseString, in, STRING );
-
+    //  3.  Comments
+        } else if ( next == L'/' && fpeekx( in, 2 ) == L'*' ) {
+            token = parse( &parseComment, in, COMMENT );
     //  4.  Identifiers
         } else if ( isIdentifierStart( next ) ) {
             token = parse( &parseIdentifier, in, IDENTIFIER );
+    //  5.  @keywords
+        } else if ( next == L'@' && isIdentifierStart( fpeekx( in, 2 ) ) ) {
+            fget( in ); // Thow away the `@`, and parse an identifier
+            token = parse( &parseIdentifier, in, ATKEYWORD );
+    //  6.  HASH
+        } else if ( next == L'#' && isIdentifier( fpeekx( in, 2 ) ) ) {
+            fget( in ); // Throw away the `#`, and parse an identifier
+            token = parse( &parseIdentifier, in, HASH );
     //  5.  Numbers
         } else if ( isNumeric( next ) ) {
             token = parse( &parseNumeric, in, NUMBER );
@@ -204,6 +210,13 @@ Token* get_next_token( FILE *in, FILE *log ) {
             token = parse( &parseDelim, in, DELIM );
         }
         next = fpeek( in );
+
+        // Postprocess for postfixed tokens:
+        if ( token && token->type == NUMBER && next == L'%' ) {
+            fget( in ); // Throw away the '%'
+            token->type = PERCENTAGE;
+            token->end  = getCurrentLocation();
+        }
     }
     if ( token ) {
         return token;
