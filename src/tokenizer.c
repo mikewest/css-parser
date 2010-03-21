@@ -5,94 +5,9 @@
 #include <wchar.h>
 #include "logging.h"
 #include "token.h"
-#include "tokenizer.h"
 #include "tokenizer_charactertests.h"
-
-#define MAX_STRING_LENGTH 1024  // 1k's probably not enough, but it's a start
-
-//
-//  Malloc/Realloc Helper Functions
-//
-wchar_t* allocateLargeString( wchar_t *from ) {
-    // Allocate some large amount of memory
-    wchar_t *temp = malloc( ( MAX_STRING_LENGTH + 1 ) * sizeof( wchar_t ) );
-    if ( temp == NULL ) {
-        // If it failed...
-        wchar_t msg[200];
-        swprintf( msg, 200, L"Could not allocate %d characters in `%s`.", ( MAX_STRING_LENGTH + 1 ), from );
-        fatal( msg );
-    }
-    return temp;
-}
-
-wchar_t* downsizeLargeString( wchar_t *string, int length, wchar_t *from ) {
-    // Downsize `temp`
-    string = realloc( string, length * sizeof( wchar_t ) );
-    if ( string == NULL ) {
-        // If it failed...
-        wchar_t msg[200];
-        swprintf( msg, 200, L"Could not downsize from %d to %d characters in `parseIdentifier`.", ( MAX_STRING_LENGTH + 1 ), length );
-        fatal( msg );
-    }
-    return string;
-}
-
-//
-//  "Global" state.  This is ugly.
-//
-unsigned int line_number    = 0;
-unsigned int column_number  = 0;
-
-FileLocation* getCurrentLocation() {
-    FileLocation* current = malloc( sizeof( FileLocation ) );
-    current->line   = line_number;
-    current->column = column_number;
-    return current;
-}
-
-
-//
-//  Get and Peek
-//
-wchar_t fget( FILE *in ) {
-    wint_t  c;
-    if ( !feof( in ) ) {
-        c = fgetwc( in );
-        if ( c == '\n' ) {
-            line_number    += 1;
-            column_number   = 0;
-        } else {
-            column_number  += 1;
-        }
-    } else {
-        return WEOF;
-    }
-    return (wchar_t) c;
-}
-wchar_t fpeekx( FILE *in, int x ) {
-    wchar_t *temp = allocateLargeString( L"fpeekx" );
-    if ( x > MAX_STRING_LENGTH ) {
-        error( L"`fpeek` can't look more than MAX_STRING_LENGTH characters ahead." );
-        x = MAX_STRING_LENGTH;
-    }
-
-    int        i;
-    wchar_t    value;
-    for( i = 0; i < x; i++ ) {
-        temp[ i ] = fgetwc( in );
-    }
-    value = temp[ i - 1 ];
-    for ( i = i - 1; i >= 0; i-- ) {
-        ungetwc( temp[ i ], in );
-    }
-    free( temp );
-    return value;
-}
-wchar_t fpeek( FILE *in ) {
-    return fpeekx( in, 1 );
-}
-
-
+#include "tokenizer_helpers.h"
+#include "tokenizer.h"
 
 //
 //  Composite Parsers
@@ -151,7 +66,6 @@ wchar_t* parseString( FILE *in ) {
 wchar_t* parseComment( FILE *in ) {
     assert( fpeek( in ) == L'/' );
 
-    wchar_t type;
     wchar_t *temp  = allocateLargeString( L"parseComment" );
     int  length = 0;
     
@@ -174,7 +88,70 @@ wchar_t* parseComment( FILE *in ) {
     temp[ length ] = L'\0';
     return downsizeLargeString( temp, length, L"parseComment" );
 }
+wchar_t* parseOperator( FILE *in ) {
+    assert( isOperator( fpeek( in ) ) );
 
+    wchar_t *temp  = allocateLargeString( L"parseOperator" );
+    int  length = 1;
+    
+    temp[ 0 ] = fget( in ); 
+
+    if (
+        ( temp[ 0 ] == L'~' || temp[ 0 ] == L'|' || temp[ 0 ] == L'*' || temp[ 0 ] == L'^' || temp[ 0 ] == L'$' ) &&
+        fpeek( in ) == L'='
+    ) {
+        temp[ 1 ]   = fget( in );
+        length      = 2;
+    }
+    
+    temp[ length ] = L'\0';
+    return downsizeLargeString( temp, length, L"parseComment" );
+}
+void categorize_known_operators( Token *t ) {
+    if ( wcscmp( t->value, L"~=" ) == 0 ) {
+            t->type = INCLUDES;
+    } else if ( wcscmp( t->value, L"|=" ) == 0 ) {
+            t->type = DASHMATCH;
+    } else if ( wcscmp( t->value, L"^=" ) == 0 ) {
+            t->type = PREFIXMATCH;
+    } else if ( wcscmp( t->value, L"$=" ) == 0 ) {
+            t->type = SUFFIXMATCH;
+    } else if ( wcscmp( t->value, L"*=" ) == 0 ) {
+            t->type = SUBSTRINGMATCH;
+    } else if ( wcscmp( t->value, L"{" ) == 0 ) {
+            t->type = CURLY_BRACE_OPEN;
+    } else if ( wcscmp( t->value, L"}" ) == 0 ) {
+            t->type = CURLY_BRACE_CLOSE;
+    } else if ( wcscmp( t->value, L"[" ) == 0 ) {
+            t->type = SQUARE_BRACE_OPEN;
+    } else if ( wcscmp( t->value, L"]" ) == 0 ) {
+            t->type = SQUARE_BRACE_CLOSE;
+    } else if ( wcscmp( t->value, L"(" ) == 0 ) {
+            t->type = PAREN_OPEN;
+    } else if ( wcscmp( t->value, L")" ) == 0 ) {
+            t->type = PAREN_CLOSE;
+    } else if ( wcscmp( t->value, L":" ) == 0 ) {
+            t->type = COLON;
+    } else if ( wcscmp( t->value, L";" ) == 0 ) {
+            t->type = SEMICOLON;
+    } else if ( wcscmp( t->value, L"@" ) == 0 ) {
+            t->type = AT;
+    } else if ( wcscmp( t->value, L"%" ) == 0 ) {
+            t->type = PERCENT;
+    } else if ( wcscmp( t->value, L"#" ) == 0 ) {
+            t->type = HASH;
+    } else if ( wcscmp( t->value, L"." ) == 0 ) {
+            t->type = DOT;
+    } else {
+        wprintf( L"`%S` didn't match anything.", t->value );
+    }
+}
+wchar_t* parseDelim( FILE *in ) {
+    wchar_t *temp = malloc( 2 * sizeof( wchar_t ) );
+    temp[ 0 ] = fget( in );
+    temp[ 1 ] = L'\0';
+    return temp;    
+}
 
 //
 //  Given a parsing function, build a Token
@@ -215,15 +192,16 @@ Token* get_next_token( FILE *in, FILE *log ) {
     //  4.  Identifiers
         } else if ( isIdentifierStart( next ) ) {
             token = parse( &parseIdentifier, in, IDENTIFIER );
-    //  5.   Numbers
+    //  5.  Numbers
         } else if ( isNumeric( next ) ) {
             token = parse( &parseNumeric, in, NUMBER );
-    //  
+    //  6.  Known Operators
         } else if ( isOperator( next ) ) {
-            fget( in ); 
+            token = parse( &parseOperator, in, DELIM );
+            categorize_known_operators( token );
+    //  7.  Otherwise...
         } else {
-            c = fget( in );
-            wprintf( L"`%c` is unknown!\n", c );
+            token = parse( &parseDelim, in, DELIM );
         }
         next = fpeek( in );
     }

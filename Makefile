@@ -4,6 +4,7 @@ CFILES = $(SOURCE_ROOT)/main.c \
 		 $(SOURCE_ROOT)/logging.c \
 		 $(SOURCE_ROOT)/token.c \
 		 $(SOURCE_ROOT)/tokenizer.c \
+		 $(SOURCE_ROOT)/tokenizer_helpers.c \
 		 $(SOURCE_ROOT)/tokenizer_charactertests.c
 
 all:	analyze tokenize

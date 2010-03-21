@@ -1,10 +1,7 @@
 typedef enum {
     IDENTIFIER,         //  {identifier}
-    ATKEYWORD,          //  @{identifier}
     STRING,             //  {string}
-    HASH,               //  #{name}
     NUMBER,             //  {num}
-    PERCENTAGE,         //  {num}%
     DIMENSION,          //  {num}{identifier}
     URI,                //  url\({whitespace}{string}{whitespace}\)
                         //  url\({whitespace}([!#$%&*-~]|{nonascii}|{escape})*{whitespace}\)
@@ -19,6 +16,10 @@ typedef enum {
     PAREN_CLOSE,        //  )
     SQUARE_BRACE_OPEN,  //  [
     SQUARE_BRACE_CLOSE, //  ]
+    AT,                 //  @
+    PERCENT,            //  %
+    HASH,               //  #
+    DOT,                //  .
     WHITESPACE,         //  [ \t\r\n\f]+
     COMMENT,            //  \/\*[^*]*\*+([^/*][^*]*\*+)*\/
     FUNCTION,           //  {identifier}\(
