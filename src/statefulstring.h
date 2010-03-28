@@ -8,15 +8,21 @@ typedef struct {
 typedef struct {
     wchar_t                 *value;
     unsigned int            length;
-    unsigned int            *line_breaks;
-    unsigned int            current_index;
-    StatefulStringPosition  current_position;
+    unsigned int            lines;
+    unsigned int            *linebreaks;
+    unsigned int            next_index;
+    StatefulStringPosition  next_position;
 } StatefulString;
 
 /**
  *  Given a stream, return a pointer to a `StatefulString`
  */
 StatefulString *ss_fromstream( FILE* stream );
+
+/**
+ *  Free allocated memory, and destroy the `StatefulString`
+ */
+void ss_free( StatefulString* ss );
 
 /**
  *  Get the next character in the string, and update the

@@ -1,18 +1,10 @@
-SOURCE_ROOT = ./src
+SRC = ./src
+TEST = ./tests
 BUILD_ROOT = ./build
-CFILES = $(SOURCE_ROOT)/main.c \
-		 $(SOURCE_ROOT)/logging.c \
-		 $(SOURCE_ROOT)/token.c \
-		 $(SOURCE_ROOT)/tokenizer.c \
-		 $(SOURCE_ROOT)/tokenizer_helpers.c \
-		 $(SOURCE_ROOT)/tokenizer_charactertests.c \
-		 $(SOURCE_ROOT)/parser.c
+CHECK = /usr/local/lib/libcheck.a
 
-all:	analyze tokenize
+checkstatefulstring: $(SRC)/statefulstring.h $(SRC)/statefulstring.c $(TEST)/check_statefulstring.c
+	@clang -o $(BUILD_ROOT)/checkstatefulstring $(SRC)/statefulstring.c $(TEST)/check_statefulstring.c $(CHECK)
+	@$(BUILD_ROOT)/checkstatefulstring
 
-tokenize:	$(CFILES)
-	clang -o $(BUILD_ROOT)/tokenize $(CFILES)
-
-
-analyze:	$(CFILES)
-	clang --analyze $(CFILES)
+check: checkstatefulstring
