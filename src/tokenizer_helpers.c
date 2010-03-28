@@ -39,11 +39,15 @@ wchar_t* downsizeLargeString( wchar_t *string, int length, wchar_t *from ) {
 unsigned int line_number    = 0;
 unsigned int column_number  = 0;
 
-FileLocation* getCurrentLocation() {
+FileLocation* getCurrentLocation( void ) {
     FileLocation* current = malloc( sizeof( FileLocation ) );
     current->line   = line_number;
     current->column = column_number;
     return current;
+}
+void resetCurrentLocation( void ) {
+    line_number     = 0;
+    column_number   = 0;
 }
 
 
