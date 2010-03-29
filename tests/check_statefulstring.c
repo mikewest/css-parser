@@ -61,6 +61,14 @@ START_TEST (test_statefulstring_create_lines)
     );
 }
 END_TEST
+START_TEST (test_statefulstring_create_linebreaks)
+{
+    unsigned int test[5] = { 0, 21, 43, 72, 73 };
+    for ( int i = 0; i < ss->lines; i++ ) {
+        fail_unless( ss->linebreaks[ i ] == test[ i ], NULL );
+    }
+}
+END_TEST
 START_TEST (test_statefulstring_create_index)
 {
     fail_unless(
@@ -125,11 +133,6 @@ START_TEST (test_statefulstring_getchar_position)
     }
 }
 END_TEST
-START_TEST (test_statefulstring_lines)
-{
-
-}
-END_TEST
 
 Suite * statefulstring_suite (void) {
     Suite *s = suite_create ("Stateful String");
@@ -144,6 +147,8 @@ Suite * statefulstring_suite (void) {
     tcase_add_test (tc_core, test_statefulstring_create_index);
     tcase_add_test (tc_core, test_statefulstring_create_position);
     tcase_add_test (tc_core, test_statefulstring_create_lines);
+    tcase_add_test (tc_core, test_statefulstring_create_linebreaks);
+
     //
     //  getchar
     //

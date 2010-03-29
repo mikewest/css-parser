@@ -5,21 +5,27 @@
 #include "logging.h"
 #include "statefulstring.h"
 
-#define BASE_STRING_LENGTH  2       //  Start with 10k, malloc from there.
-#define BASE_LINES          1000    //  Start with 1k, malloc from there.
-#define ERROR_ALLOCATION    -1
+#define BASE_STRING_LENGTH  10240   //  Start with 10k, malloc from there.
+#define BASE_MAX_LINES      1024    //  Start with 1k, malloc from there.
 
 void allocationerror( unsigned int size, wchar_t* where ) {
-        wchar_t msg[200];
-        wchar_t *format = L"Could not allocate %d characters in `%s`.";
-        swprintf( msg, 200, format, size, where );
-        printf( "%s", msg );
+    wchar_t msg[200];
+    wchar_t *format = L"Could not allocate %d characters in `%s`.";
+    swprintf( msg, 200, format, size, where );
+    printf( "%s", msg );
+    exit( EXIT_FAILURE );
 }
 
-void addlinebreak( StatefulString* ss, int index ) {
-    ( ss->lines )++;
+int addlinebreak( StatefulString* ss, int index ) {
+    if ( ss->lines >= ss->maxlines_ ) {
+        ss->maxlines_ *= 2;
+        ss->linebreaks = realloc( ss->linebreaks, ( ss->maxlines_ + 1 ) * sizeof( unsigned int ) );
+        if ( ss->linebreaks == NULL ) {
+            allocationerror( ss->maxlines_, L"StatefulString::addlinebreak" );
+            return ERROR_ALLOCATION;
+        }
+    }
     ss->linebreaks[ ss->lines++ ] = index;
-    // @TODO: Allocate more memory if we exceed `BASE_LINES`.
 }
 
 int readstream( FILE* stream, StatefulString* ss ) {
@@ -60,7 +66,9 @@ StatefulString *ss_fromstream( FILE* stream ) {
     ss->next_index                  = 0;
     ( ss->next_position ).line      = 0;
     ( ss->next_position ).column    = 0;
-    ss->linebreaks                  = malloc( ( BASE_LINES + 1 ) * sizeof( unsigned int ) );
+    ss->maxlines_                   = BASE_MAX_LINES;
+    ss->linebreaks                  = malloc( ( BASE_MAX_LINES + 1 ) * sizeof( unsigned int ) );
+    ss->linebreaks[ 0 ]             = 0;
     readstream( stream, ss );
 
     return ss;

@@ -1,4 +1,4 @@
-#define NOT_ENOUGH_MEMORY -1
+#define ERROR_ALLOCATION    -1
 
 typedef struct {
     unsigned int    line;
@@ -6,12 +6,15 @@ typedef struct {
 } StatefulStringPosition;
 
 typedef struct {
-    wchar_t                 *value;
-    unsigned int            length;
-    unsigned int            lines;
-    unsigned int            *linebreaks;
-    unsigned int            next_index;
-    StatefulStringPosition  next_position;
+    wchar_t                 *value;         //  The string that's read in
+    unsigned int            length;         //  The number of `wchar_t`s in `value`
+    unsigned int            lines;          //  The number of lines.
+    unsigned int            *linebreaks;    //  An array containing each line's index
+    unsigned int            next_index;     //  The next character to read
+    StatefulStringPosition  next_position;  //  The position of the next character
+
+    // Internal: No touchies, plz!
+    unsigned int            maxlines_;      //  The length of `linebreaks[]`
 } StatefulString;
 
 /**
