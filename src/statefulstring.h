@@ -5,6 +5,8 @@ typedef struct {
     unsigned int    column;
 } StatefulStringPosition;
 
+int sspos_eq( const StatefulStringPosition, const StatefulStringPosition );
+
 typedef struct {
     wchar_t                 *value;         //  The string that's read in
     unsigned int            length;         //  The number of `wchar_t`s in `value`

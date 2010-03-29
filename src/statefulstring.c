@@ -113,3 +113,10 @@ wchar_t ss_peekx( StatefulString* ss, const unsigned int x ) {
         return ss->value[ ss->next_index + x ];
     }    
 }
+
+int sspos_eq( const StatefulStringPosition pos1, const StatefulStringPosition pos2 ) {
+    return (
+        pos1.line == pos2.line      &&
+        pos1.column == pos2.column
+    );
+}
