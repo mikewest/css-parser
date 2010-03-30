@@ -44,7 +44,7 @@ typedef struct {
     unsigned int            length_;
 } Token;
 
-Token* token_new( wchar_t *value, unsigned int length, TokenType type, const StatefulStringPosition start, const StatefulStringPosition end );
+Token* token_new( const wchar_t *value, const unsigned int length, const TokenType type, const StatefulStringPosition start, const StatefulStringPosition end );
 void token_free( Token *t );
-void token_print( Token *t );
-int token_eq( Token *t1, Token *t2 );
+void token_print( const Token *t );
+int token_eq( const Token *t1, const Token *t2 );
