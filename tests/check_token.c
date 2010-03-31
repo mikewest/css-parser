@@ -5,7 +5,7 @@
 #include <check.h>
 #include "../src/logging.h"
 #include "../src/statefulstring.h"
-#include "../src/csstoken.h"
+#include "../src/token.h"
 
 wchar_t *value      = L"This is a test.";
 unsigned int length = 15;

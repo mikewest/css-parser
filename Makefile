@@ -5,18 +5,18 @@ CHECK = /usr/local/lib/libcheck.a
 
 STATEFULSTRING_SRC = $(SRC)/statefulstring
 
-CSSTOKEN_SRC = $(SRC)/csstoken
+TOKEN_SRC = $(SRC)/token
 
 
 statefulstring.out: $(STATEFULSTRING_SRC).h $(STATEFULSTRING_SRC).c
-csstoken.out: $(CSSTOKEN_SRC).h $(CSSTOKEN_SRC).c
+token.out: $(TOKEN_SRC).h $(TOKEN_SRC).c
 
 checkstatefulstring: statefulstring.out $(TEST)/check_statefulstring.c
 	@clang -o $(BUILD_ROOT)/checkstatefulstring $(STATEFULSTRING_SRC).c $(TEST)/check_statefulstring.c $(CHECK)
 	@$(BUILD_ROOT)/checkstatefulstring
 
-checkcsstoken: statefulstring.out csstoken.out $(TEST)/check_csstoken.c
-	@clang -o $(BUILD_ROOT)/checkcsstoken $(STATEFULSTRING_SRC).c $(CSSTOKEN_SRC).c $(TEST)/check_csstoken.c $(CHECK)
-	@$(BUILD_ROOT)/checkcsstoken
+checktoken: statefulstring.out token.out $(TEST)/check_token.c
+	@clang -o $(BUILD_ROOT)/checktoken $(STATEFULSTRING_SRC).c $(TOKEN_SRC).c $(TEST)/check_token.c $(CHECK)
+	@$(BUILD_ROOT)/checktoken
 
-check: checkstatefulstring checkcsstoken
+check: checkstatefulstring checktoken

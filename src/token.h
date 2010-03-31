@@ -32,19 +32,19 @@ typedef enum {
     SUFFIXMATCH,        //  $=
     SUBSTRINGMATCH,     //  *=
     DELIM               //  Everything else.
-} token_type;
+} TokenType;
 
 typedef struct {
-    unsigned int line, column;
-} FileLocation;
+    StatefulStringPosition  *start;
+    StatefulStringPosition  *end;
+    TokenType               type;
+    wchar_t                 *value;
 
-typedef struct {
-    FileLocation    *start;
-    FileLocation    *end;
-    token_type      type;
-    wchar_t         *value;
+    // Internal: No touchies, plz!
+    unsigned int            length_;
 } Token;
 
-Token* new_token( wchar_t*, token_type, FileLocation*, FileLocation* );
-void free_token( Token* );
-void print_token( Token* );
+Token* token_new( const wchar_t *value, const unsigned int length, const TokenType type, const StatefulStringPosition start, const StatefulStringPosition end );
+void token_free( Token *t );
+void token_print( const Token *t );
+int token_eq( const Token *t1, const Token *t2 );
