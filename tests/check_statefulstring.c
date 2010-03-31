@@ -6,9 +6,7 @@
 #include "../src/logging.h"
 #include "../src/statefulstring.h"
 
-
 StatefulString *ss;
-FILE *file;
 wchar_t CORE_TEST_STRING[]  = L"This is a dummy file.\nIt has several lines.\nIt will be good for testing.\n\nOmg!";
 int CORE_TEST_STRING_LENGTH = 78;  //wcslen( CORE_TEST_STRING );
 
