@@ -25,6 +25,11 @@ typedef struct {
 StatefulString *ss_fromstream( FILE* stream );
 
 /**
+ *  Given an array of `wchar_t`s, return a pointer to a `StatefulString`
+ */
+StatefulString *ss_fromstring( const wchar_t* string );
+
+/**
  *  Free allocated memory, and destroy the `StatefulString`
  */
 void ss_free( StatefulString* ss );

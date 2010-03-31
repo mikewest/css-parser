@@ -7,32 +7,17 @@
 #include "../src/statefulstring.h"
 
 
-FILE *generateTempfile( const wchar_t *string ) {
-    FILE *file      = tmpfile();
-    
-    if ( file ) {
-        fwprintf( file, L"%S", string );
-        rewind( file );
-        return file;
-    } else {
-        wprintf( L"Couldn't create a temp file.  Dunno why.  Soz." );
-        exit( EXIT_FAILURE );
-    }
-}
-
 StatefulString *ss;
 FILE *file;
 wchar_t CORE_TEST_STRING[]  = L"This is a dummy file.\nIt has several lines.\nIt will be good for testing.\n\nOmg!";
 int CORE_TEST_STRING_LENGTH = 78;  //wcslen( CORE_TEST_STRING );
 
 void setup( void ) {
-    file    = generateTempfile( CORE_TEST_STRING );
-    ss      = ss_fromstream( file );
+    ss      = ss_fromstring( CORE_TEST_STRING );
 }
 
 void teardown( void ) {
     ss_free( ss );
-    fclose( file );
 }
 /*
  *  Core Tests: Creation, etc.

@@ -74,6 +74,21 @@ StatefulString *ss_fromstream( FILE* stream ) {
     return ss;
 }
 
+StatefulString *ss_fromstring( const wchar_t *string ) {
+    FILE *file          = tmpfile();
+    StatefulString *ss;
+    if ( file ) {
+        fwprintf( file, L"%S", string );
+        rewind( file );
+    } else {
+        wprintf( L"Couldn't create a temp file.  Dunno why.  Soz." );
+        exit( EXIT_FAILURE );
+    }
+    ss = ss_fromstream( file );
+    fclose( file );
+    return ss;
+}
+
 void ss_free( StatefulString* ss ) {
     free( ss->value );
     free( ss->linebreaks );
