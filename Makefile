@@ -7,6 +7,10 @@ STATEFULSTRING_SRC = $(SRC)/statefulstring
 TOKEN_SRC = $(SRC)/token
 TOKENIZER_SRC = $(SRC)/csstokenizer
 
+all: clean check
+
+clean:
+	rm -f $(BUILD_ROOT)/*
 
 statefulstring.out: $(STATEFULSTRING_SRC).h $(STATEFULSTRING_SRC).c
 token.out: $(TOKEN_SRC).h $(TOKEN_SRC).c
@@ -25,5 +29,3 @@ checktokenizer: statefulstring.out token.out tokenizer.out $(TEST)/check_tokeniz
 	@$(BUILD_ROOT)/checktokenizer
 	
 check: checkstatefulstring checktoken checktokenizer
-
-all: check
