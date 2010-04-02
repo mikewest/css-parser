@@ -63,37 +63,37 @@ END_TEST
 //
 START_TEST (test_csstoken_eq)
 {
-    fail_unless( token_eq( t1, t2 ), "Tokens with the same values ought be equal." );
+    fail_unless( token_eeq( t1, t2 ), "Tokens with the same values ought be equal." );
 }
 END_TEST
 START_TEST (test_csstoken_eq_value)
 {
     t1->value[0] = L'N';
-    fail_unless( !token_eq( t1, t2 ), "Tokens with different values ought not be equal." );
+    fail_unless( !token_eeq( t1, t2 ), "Tokens with different values ought not be equal." );
 }
 END_TEST
 START_TEST (test_csstoken_eq_start)
 {
     ( t1->start )->line = 1;
-    fail_unless( !token_eq( t1, t2 ), "Tokens with different starts ought not be equal." );
+    fail_unless( !token_eeq( t1, t2 ), "Tokens with different starts ought not be equal." );
 }
 END_TEST
 START_TEST (test_csstoken_eq_end)
 {
     ( t1->end )->line = 1;
-    fail_unless( !token_eq( t1, t2 ), "Tokens with different ends ought not be equal." );
+    fail_unless( !token_eeq( t1, t2 ), "Tokens with different ends ought not be equal." );
 }
 END_TEST
 START_TEST (test_csstoken_eq_length)
 {
     t1->length_ = 0;
-    fail_unless( !token_eq( t1, t2 ), "Tokens with different lengths ought not be equal." );
+    fail_unless( !token_eeq( t1, t2 ), "Tokens with different lengths ought not be equal." );
 }
 END_TEST
 START_TEST (test_csstoken_eq_type)
 {
     t1->type = ATKEYWORD;
-    fail_unless( !token_eq( t1, t2 ), "Tokens with different types ought not be equal." );
+    fail_unless( !token_eeq( t1, t2 ), "Tokens with different types ought not be equal." );
 }
 END_TEST
 

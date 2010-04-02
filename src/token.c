@@ -44,12 +44,17 @@ int token_eq( const Token *t1, const Token *t2 ) {
         //  Value
         wcsncmp( t1->value, t2->value, t1->length_ ) == 0   &&
         //  Type
-        t1->type == t2->type                                &&
+        t1->type == t2->type
+    );
+}
+int token_eeq( const Token *t1, const Token *t2 ) {
+    return (
+        token_eq( t1, t2 )                          &&
         //  Start
-        (t1->start)->line == (t2->start)->line              &&
-        (t1->start)->column == (t2->start)->column          &&
+        (t1->start)->line == (t2->start)->line      &&
+        (t1->start)->column == (t2->start)->column  &&
         //  End
-        (t1->end)->line == (t2->end)->line                  &&
+        (t1->end)->line == (t2->end)->line          &&
         (t1->end)->column == (t2->end)->column
     );
 }

@@ -22,7 +22,7 @@ int addlinebreak( StatefulString* ss, int index ) {
         ss->linebreaks = realloc( ss->linebreaks, ( ss->maxlines_ + 1 ) * sizeof( unsigned int ) );
         if ( ss->linebreaks == NULL ) {
             allocationerror( ss->maxlines_, L"StatefulString::addlinebreak" );
-            return ERROR_ALLOCATION;
+            exit( EXIT_FAILURE );
         }
     }
     ss->linebreaks[ ss->lines++ ] = index;
@@ -35,7 +35,7 @@ int readstream( FILE* stream, StatefulString* ss ) {
 
     if ( temp == NULL ) {
         allocationerror( ( max_length + 1 ), L"StatefulString::readstream" );
-        return ERROR_ALLOCATION;
+        exit( EXIT_FAILURE );
     }
     
     while ( ( temp[ length++ ] = fgetwc( stream ) ) != WEOF ) { 
@@ -68,6 +68,10 @@ StatefulString *ss_fromstream( FILE* stream ) {
     ( ss->next_position ).column    = 0;
     ss->maxlines_                   = BASE_MAX_LINES;
     ss->linebreaks                  = malloc( ( BASE_MAX_LINES + 1 ) * sizeof( unsigned int ) );
+    if ( ss->linebreaks == NULL ) {
+        allocationerror( BASE_MAX_LINES, L"StatefulString::ss_fromstream" );
+        exit( EXIT_FAILURE );
+    }
     ss->linebreaks[ 0 ]             = 0;
     readstream( stream, ss );
 
@@ -81,7 +85,7 @@ StatefulString *ss_fromstring( const wchar_t *string ) {
         fwprintf( file, L"%S", string );
         rewind( file );
     } else {
-        wprintf( L"Couldn't create a temp file.  Dunno why.  Soz." );
+        fwprintf( stderr, L"Couldn't create a temp file.  Dunno why.  Soz." );
         exit( EXIT_FAILURE );
     }
     ss = ss_fromstream( file );
@@ -93,6 +97,24 @@ void ss_free( StatefulString* ss ) {
     free( ss->value );
     free( ss->linebreaks );
     free( ss );
+}
+
+wchar_t *ss_substr( const StatefulString* ss, const unsigned int start, const unsigned int length ) {
+    if ( start + length > ss->length ) {
+        return NULL;
+    }
+
+    wchar_t *temp = malloc( ( length + 1 ) * sizeof( wchar_t ) );
+    int i;
+    if ( temp == NULL ) {
+        allocationerror( length, L"StatefulString::ss_substr" );
+        exit( EXIT_FAILURE );
+    }
+    for ( i = 0; i < length; i++ ) {
+        temp[ i ] = ss->value[ start + i ];
+    }
+    temp[ i ] = L'\0';
+    return temp;
 }
 
 wchar_t ss_getchar( StatefulString* ss ) {
@@ -115,7 +137,7 @@ wchar_t ss_getchar( StatefulString* ss ) {
  *  changing its state.
  */
 wchar_t ss_peek( StatefulString* ss ) {
-    return ss_peekx( ss, 1 );
+    return ss_peekx( ss, 0 );
 }
 /**
  *  Peek at the the Xth-next character in the string without

@@ -8,6 +8,6 @@ typedef struct {
 } Tokenizer;
 
 Tokenizer *tokenizer_new( StatefulString *ss );
-
+Token *tokenizer_next( Tokenizer *t );
 
 void tokenizer_free( Tokenizer *t );

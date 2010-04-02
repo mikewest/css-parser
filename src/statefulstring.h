@@ -34,6 +34,8 @@ StatefulString *ss_fromstring( const wchar_t* string );
  */
 void ss_free( StatefulString* ss );
 
+wchar_t *ss_substr( const StatefulString* ss, const unsigned int start, const unsigned int length );
+
 /**
  *  Get the next character in the string, and update the
  *  `StatefulString`'s state:

@@ -10,6 +10,15 @@ StatefulString *ss;
 wchar_t CORE_TEST_STRING[]  = L"This is a dummy file.\nIt has several lines.\nIt will be good for testing.\n\nOmg!";
 int CORE_TEST_STRING_LENGTH = 78;  //wcslen( CORE_TEST_STRING );
 
+int wceq( wchar_t *s1, wchar_t *s2 ) {
+    if ( wcscmp( s1, s2 ) == 0 ) {
+        return 1;
+    } else {
+        wprintf( L"`%S` != `%S` (%d)\n", s1, s2, wcscmp( s1, s2 ) );
+        return 0;
+    }
+}
+
 void setup( void ) {
     ss      = ss_fromstring( CORE_TEST_STRING );
 }
@@ -74,7 +83,13 @@ END_TEST
 START_TEST (test_statefulstring_getchar)
 {
     for ( int i = 0; i < CORE_TEST_STRING_LENGTH; i++ ) {
+        fail_unless( ss_peek( ss ) == CORE_TEST_STRING[ i ], NULL );
         fail_unless( ss_getchar( ss ) == CORE_TEST_STRING[ i ], NULL );
+        if ( ( i + 1 ) < CORE_TEST_STRING_LENGTH ) {
+            fail_unless( ss_peek( ss ) == CORE_TEST_STRING[ i + 1 ], NULL );
+        } else {
+            fail_unless( ss_peek( ss ) == WEOF, "Peek at end of string should return `WEOF`." );
+        }
     }
 }
 END_TEST
@@ -116,6 +131,26 @@ START_TEST (test_statefulstring_getchar_position)
     }
 }
 END_TEST
+//
+//  Substr
+//
+START_TEST (test_statefulstring_substr)
+{
+    fail_unless( wceq( L"This", ss_substr( ss, 0, 4 ) ), NULL );
+    fail_unless( wceq( L"his i", ss_substr( ss, 1, 5 ) ), NULL );
+    fail_unless( wceq( L"s a du", ss_substr( ss, 6, 6 ) ), NULL );
+    fail_unless( wceq( L"mmy fil", ss_substr( ss, 12, 7 ) ), NULL );
+    fail_unless( wceq( L".\nIt has", ss_substr( ss, 20, 8 ) ), NULL );
+    fail_unless( wceq( L"Omg!", ss_substr( ss, 74, 4 ) ), NULL );
+}
+END_TEST
+START_TEST (test_statefulstring_substr_overlong)
+{
+    fail_unless( ss_substr( ss, 74, 5 ) == NULL );
+    fail_unless( ss_substr( ss, 75, 4 ) == NULL );
+    fail_unless( ss_substr( ss, 20, 1000 ) == NULL );
+}
+END_TEST
 
 Suite * statefulstring_suite (void) {
     Suite *s = suite_create ("Stateful String");
@@ -133,12 +168,19 @@ Suite * statefulstring_suite (void) {
     tcase_add_test (tc_core, test_statefulstring_create_linebreaks);
 
     //
-    //  getchar
+    //  getchar/peek
     //
     tcase_add_test (tc_core, test_statefulstring_getchar);
     tcase_add_test (tc_core, test_statefulstring_getchar_index);
     tcase_add_test (tc_core, test_statefulstring_getchar_eof);
     tcase_add_test (tc_core, test_statefulstring_getchar_position);
+    
+    //
+    //  substr
+    //
+    tcase_add_test (tc_core, test_statefulstring_substr);
+    tcase_add_test (tc_core, test_statefulstring_substr_overlong);
+
     suite_add_tcase (s, tc_core);
 
     return s;

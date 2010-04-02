@@ -3,6 +3,15 @@
 //
 //  wchar_tacter-Based Tests
 //
+
+int isNonAscii( wchar_t c ) {
+    return (
+        ( c >= 0x80     &&  c <= 0xD7FF ) ||
+        ( c >= 0xE00    &&  c <= 0xFFFD ) ||
+        ( c >= 0x10000  &&  c <= 0x10FFFF )
+    );
+}
+
 int isAlpha( wchar_t c ) {
     return iswalpha( c );
 }
@@ -16,7 +25,7 @@ int isAlphanumeric( wchar_t c ) {
 }
 int isIdentifier( wchar_t c ) {
     return (
-        isAlphanumeric( c ) || c == L'-' || c == L'_'
+        isAlphanumeric( c ) || isNonAscii( c ) || c == L'-' || c == L'_'
     );
 }
 int isIdentifierStart( wchar_t c ) {
