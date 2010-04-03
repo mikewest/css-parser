@@ -6,7 +6,8 @@ typedef struct {
 } StatefulStringPosition;
 
 int sspos_eq( const StatefulStringPosition, const StatefulStringPosition );
-
+void allocationerror( unsigned int size, wchar_t* where );
+        
 typedef struct {
     wchar_t                 *value;         //  The string that's read in
     unsigned int            length;         //  The number of `wchar_t`s in `value`

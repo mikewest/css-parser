@@ -4,6 +4,14 @@
 //  wchar_tacter-Based Tests
 //
 
+int isNonAscii( wchar_t c ) {
+    return (
+        ( c >= 0x80     &&  c <= 0xD7FF ) ||
+        ( c >= 0xE00    &&  c <= 0xFFFD ) ||
+        ( c >= 0x10000  &&  c <= 0x10FFFF )
+    );
+}
+
 int isUrlChar( wchar_t c ) {
     return (
         c   ==  0x9     ||
@@ -49,13 +57,6 @@ int isNameStart( wchar_t c ) {
 };
 
 
-int isNonAscii( wchar_t c ) {
-    return (
-        ( c >= 0x80     &&  c <= 0xD7FF ) ||
-        ( c >= 0xE00    &&  c <= 0xFFFD ) ||
-        ( c >= 0x10000  &&  c <= 0x10FFFF )
-    );
-}
 
 int isAlpha( wchar_t c ) {
     return iswalpha( c );

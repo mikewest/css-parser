@@ -142,12 +142,11 @@ Token *parseIdentifier( Tokenizer *tokenizer ) {
 
     int start, length;
     StatefulStringPosition pos1, pos2;
-    wchar_t temp;
 
     start   = ss->next_index;
     length  = 0;
     pos1    = ss->next_position;
-    while ( isNameChar( temp = ss_getchar( ss ) ) ) {
+    while ( isNameChar( ss_getchar( ss ) ) ) {
         length++;
     }
     pos2    = ss->next_position;

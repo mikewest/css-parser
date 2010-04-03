@@ -12,7 +12,7 @@ void allocationerror( unsigned int size, wchar_t* where ) {
     wchar_t msg[200];
     wchar_t *format = L"Could not allocate %d characters in `%s`.";
     swprintf( msg, 200, format, size, where );
-    printf( "%s", msg );
+    wprintf( L"%s", msg );
     exit( EXIT_FAILURE );
 }
 
@@ -26,6 +26,7 @@ int addlinebreak( StatefulString* ss, int index ) {
         }
     }
     ss->linebreaks[ ss->lines++ ] = index;
+    return ss->lines;
 }
 
 int readstream( FILE* stream, StatefulString* ss ) {
@@ -56,6 +57,7 @@ int readstream( FILE* stream, StatefulString* ss ) {
 
     ss->value   = temp;
     ss->length  = length;
+    return ss->length;
 }
 
 StatefulString *ss_fromstream( FILE* stream ) {
