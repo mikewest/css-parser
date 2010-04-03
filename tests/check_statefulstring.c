@@ -93,6 +93,14 @@ START_TEST (test_statefulstring_getchar)
     }
 }
 END_TEST
+START_TEST (test_statefulstring_peekx)
+{
+    for ( int i = 0; i < CORE_TEST_STRING_LENGTH; i++ ) {
+        fail_unless( ss_peekx( ss, i ) == CORE_TEST_STRING[ i ], NULL );
+    }
+    fail_unless( ss_peekx( ss, CORE_TEST_STRING_LENGTH ) == WEOF );
+}
+END_TEST
 START_TEST (test_statefulstring_getchar_index)
 {
     for ( int i = 0; i < CORE_TEST_STRING_LENGTH; i++ ) {
@@ -174,6 +182,7 @@ Suite * statefulstring_suite (void) {
     tcase_add_test (tc_core, test_statefulstring_getchar_index);
     tcase_add_test (tc_core, test_statefulstring_getchar_eof);
     tcase_add_test (tc_core, test_statefulstring_getchar_position);
+    tcase_add_test( tc_core, test_statefulstring_peekx );
     
     //
     //  substr

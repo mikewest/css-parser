@@ -47,7 +47,7 @@ int readstream( FILE* stream, StatefulString* ss ) {
             temp        = realloc( temp, ( max_length + 1 ) * sizeof( wchar_t ) );
             if ( temp == NULL ) {
                 allocationerror( max_length, L"StatefulString::readstream" );
-                return ERROR_ALLOCATION;
+                exit( EXIT_FAILURE );
             }
         }
     }
@@ -80,7 +80,6 @@ StatefulString *ss_fromstream( FILE* stream ) {
 
 StatefulString *ss_fromstring( const wchar_t *string ) {
     FILE *file          = tmpfile();
-    StatefulString *ss;
     if ( file ) {
         fwprintf( file, L"%S", string );
         rewind( file );
@@ -88,9 +87,7 @@ StatefulString *ss_fromstring( const wchar_t *string ) {
         fwprintf( stderr, L"Couldn't create a temp file.  Dunno why.  Soz." );
         exit( EXIT_FAILURE );
     }
-    ss = ss_fromstream( file );
-    fclose( file );
-    return ss;
+    return ss_fromstream( file );
 }
 
 void ss_free( StatefulString* ss ) {
