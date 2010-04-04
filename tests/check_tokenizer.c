@@ -54,8 +54,8 @@ int processSingleTokenString( wchar_t *s, wchar_t *expected, TokenType type, int
         ( printFailure && !returnvalue ) ||
         ( printSuccess && returnvalue )
     ) {
-        wprintf( L"Token 1: `%S`\n", t1->value );
-        wprintf( L"Token 2: `%S`\n", t2->value );
+        wprintf( L"Token 1: `%S` (%d)\n", t1->value, t1->type );
+        wprintf( L"Token 2: `%S` (%d)\n", t2->value, t2->type );
     }
     token_free( t1 );
     token_free( t2 );
@@ -87,6 +87,21 @@ START_TEST (test_tokenizer_types_identifier_single)
     fail_unless(    singleTokenString( L"identïfier",   L"identïfier",  IDENTIFIER ), "Unicode characters are valid in identifiers." );
     fail_unless(    singleTokenString( L"ïdentifier",   L"ïdentifier",  IDENTIFIER ), "Unicode characters are valid at the beginning of identifiers." );
     fail_unless(    singleTokenString( L"identifieï",   L"identifieï",  IDENTIFIER ), "Unicode characters are valid at the end of identifiers." );
+}
+END_TEST
+START_TEST (test_tokenizer_types_atkeyword_single)
+{
+    //                                 Tokenize             Expected        Type 
+    fail_unless(    singleTokenString( L"@keyword",     L"keyword",     ATKEYWORD ) );
+}
+END_TEST
+START_TEST (test_tokenizer_types_hashkeyword_single)
+{
+    //                                 Tokenize             Expected        Type 
+    fail_unless(    singleTokenString( L"#keyword",     L"keyword",     HASHKEYWORD ) );
+    fail_unless(    singleTokenString( L"#-keyword",    L"-keyword",    HASHKEYWORD ), "#keywords can start with a `-`." );
+    fail_unless(    singleTokenString( L"#--keyword",   L"--keyword",   HASHKEYWORD ), "#keywords can start with a double `-`." );
+    fail_unless(    singleTokenString( L"#4eyword",     L"4eyword",     HASHKEYWORD ), "#keywords can start with a number." );
 }
 END_TEST
 START_TEST (test_tokenizer_types_string_single)
@@ -129,6 +144,8 @@ Suite * tokenizer_suite (void) {
     //
     TCase *tc_types = tcase_create( "Token Types" );
     tcase_add_test( tc_types, test_tokenizer_types_identifier_single );
+    tcase_add_test( tc_types, test_tokenizer_types_atkeyword_single );
+    tcase_add_test( tc_types, test_tokenizer_types_hashkeyword_single );
     tcase_add_test( tc_types, test_tokenizer_types_string_single );
     suite_add_tcase( s, tc_types );
     return s;

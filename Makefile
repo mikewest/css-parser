@@ -2,7 +2,8 @@ SRC = ./src
 TEST = ./tests
 BUILD_ROOT = ./build
 CHECK = /usr/local/lib/libcheck.a
-CC = clang
+#CC = gcc -std=c99
+CC  = clang
 STATEFULSTRING_SRC = $(SRC)/statefulstring
 TOKEN_SRC = $(SRC)/token
 TOKENIZER_SRC = $(SRC)/csstokenizer

@@ -136,9 +136,9 @@ int isIdentifierStart( StatefulString *ss ) {
         ( next == L'-' && isNameStart( nextnext ) )
     );
 }
-Token *parseIdentifier( Tokenizer *tokenizer ) {
+Token *parseName( Tokenizer *tokenizer ) {
     StatefulString *ss = tokenizer->ss_;
-    assert( isIdentifierStart( ss ) );
+    assert( isNameChar( ss_peek( ss ) ) );
 
     int start, length;
     StatefulStringPosition pos1, pos2;
@@ -150,7 +150,52 @@ Token *parseIdentifier( Tokenizer *tokenizer ) {
         length++;
     }
     pos2    = ss->next_position;
-    return token_new( ss_substr( ss, start, length ), length, IDENTIFIER, pos1, pos2 );
+    return token_new( ss_substr( ss, start, length ), length, NAME, pos1, pos2 ); 
+}
+Token *parseIdentifier( Tokenizer *tokenizer ) {
+    StatefulString *ss = tokenizer->ss_;
+    assert( isIdentifierStart( ss ) );
+
+    // Delegate to the less-strict `parseName`
+    Token *t = parseName( tokenizer );
+    t->type = IDENTIFIER;
+    return t;
+}
+/////////////////////////////////////
+//
+//  @keyword
+//
+int isAtkeywordStart( StatefulString *ss ) {
+    return (
+        ss_peek( ss ) == L'@'   &&
+        isNameStart( ss_peekx( ss, 1 ) )
+    );
+}
+Token *parseAtkeyword( Tokenizer *tokenizer ) {
+    assert( isAtkeywordStart( tokenizer->ss_ ) );
+
+    ss_getchar( tokenizer->ss_ );   // Throw away the `@`
+    Token *t = parseIdentifier( tokenizer );
+    t->type = ATKEYWORD;
+    return t;
+}
+/////////////////////////////////////
+//
+//  #keyword
+//
+int isHashkeywordStart( StatefulString *ss ) {
+    return (
+        ss_peek( ss ) == L'#'   &&
+        isNameChar( ss_peekx( ss, 1 ) )
+    );
+}
+Token *parseHashkeyword( Tokenizer *tokenizer ) {
+    assert( isHashkeywordStart( tokenizer->ss_ ) );
+
+    ss_getchar( tokenizer->ss_ );   // Throw away the `#`
+    Token *t = parseName( tokenizer );
+    t->type = HASHKEYWORD;
+    return t;
 }
 
 Token *tokenizer_next( Tokenizer *tokenizer ) {
@@ -159,14 +204,25 @@ Token *tokenizer_next( Tokenizer *tokenizer ) {
 
     next = ss_peek( tokenizer->ss_ );
     while ( next != WEOF && !token ) {
-//  1.  Strings
+//  *   Strings
         if ( isStringStart( tokenizer->ss_ ) ) {
             token = parseString( tokenizer );
         }
-//  1.  Identifier
+//  *   Identifier
         else if ( isIdentifierStart( tokenizer->ss_ ) ) {
             token = parseIdentifier( tokenizer );
-        } else {
+        }
+//  *   @keyword
+        else if ( isAtkeywordStart( tokenizer->ss_ ) ) {
+            token = parseAtkeyword( tokenizer );
+        }
+//  *   #keyword
+        else if ( isHashkeywordStart( tokenizer->ss_ ) ) {
+            token = parseHashkeyword( tokenizer );
+        }
+       
+       
+        else {
             next = ss_getchar( tokenizer->ss_ );
         }
         /* if ( isIdentifierStart( next ) ) { */

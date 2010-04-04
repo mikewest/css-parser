@@ -1,7 +1,8 @@
 typedef enum {
     IDENTIFIER,         //  {identifier}
+    NAME,               //  Less strict than identifier, really shouldn't exist on it's own.
     ATKEYWORD,          //  @{identifier}
-    HASHKEYWORD,        //  #{identifier}
+    HASHKEYWORD,        //  #{name}
     STRING,             //  {string}
     NUMBER,             //  {num}
     DIMENSION,          //  {num}{identifier}
