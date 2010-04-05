@@ -70,7 +70,30 @@ TokenizerError *tokenizer_error( Tokenizer *tokenizer, wchar_t *msg, Token *toke
 //
 //  Parsing Functions
 //
+/////////////////////////////////////
+//
+//  Whitespace
+//
+int isWhitespaceStart( StatefulString *ss, unsigned int offset ) {
+    return isWhitespace( ss_peekx( ss, offset ) );
+}
+Token *parseWhitespace( Tokenizer *tokenizer ) {
+    StatefulString *ss = tokenizer->ss_;
+    assert( isWhitespaceStart( ss, 0 ) );
 
+    int start, length;
+    StatefulStringPosition pos1, pos2;
+
+    start   = ss->next_index;
+    length  = 0;
+    pos1    = ss->next_position;
+    while ( isWhitespace( ss_peek( ss ) ) ) {
+        ss_getchar( ss );
+        length++;
+    }
+    pos2    = ss->next_position;
+    return token_new( ss_substr( ss, start, length ), length, WHITESPACE, pos1, pos2 ); 
+}
 /////////////////////////////////////
 //
 //  Strings
@@ -146,7 +169,8 @@ Token *parseName( Tokenizer *tokenizer ) {
     start   = ss->next_index;
     length  = 0;
     pos1    = ss->next_position;
-    while ( isNameChar( ss_getchar( ss ) ) ) {
+    while ( isNameChar( ss_peek( ss ) ) ) {
+        ss_getchar( ss );
         length++;
     }
     pos2    = ss->next_position;
@@ -244,11 +268,21 @@ Token *parseNumber( Tokenizer *tokenizer ) {
         }
         length++;
     }
+    // Is the number followed by a percentage?
     if ( ss_peek( ss ) == L'%' ) {
         ss_getchar( ss );
         length++;
         type = PERCENTAGE;
     }
+    // Is the number followed by a dimension?
+    else if ( isIdentifierStart( ss, 0 ) ) {
+        while ( isNameChar( ss_peek( ss ) ) ) {
+            ss_getchar( ss );
+            length++;
+        }
+        type = DIMENSION;
+    }
+
     pos2    = ss->next_position;
     return token_new( ss_substr( ss, start, length ), length, type, pos1, pos2 ); 
 }
@@ -259,8 +293,12 @@ Token *tokenizer_next( Tokenizer *tokenizer ) {
 
     next = ss_peek( tokenizer->ss_ );
     while ( next != WEOF && !token ) {
+//  Whitespace
+        if ( isWhitespaceStart( tokenizer->ss_, 0 ) ) {
+            token = parseWhitespace( tokenizer );
+        }
 //  Strings
-        if ( isStringStart( tokenizer->ss_, 0 ) ) {
+        else if ( isStringStart( tokenizer->ss_, 0 ) ) {
             token = parseString( tokenizer );
         }
 //  Identifier

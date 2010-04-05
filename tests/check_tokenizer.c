@@ -70,7 +70,19 @@ int singleTokenString( wchar_t *s, wchar_t *expected, TokenType type ) {
 int notSingleTokenString( wchar_t *s, wchar_t *expected, TokenType type ) {
     return !processSingleTokenString( s, expected, type, 0, 1 );
 }
-START_TEST (test_tokenizer_types_identifier_single)
+START_TEST( test_tokenizer_types_whitespace_single )
+{
+    //                                 Tokenize         Expected        Type
+    fail_unless(    singleTokenString( L" ",            L" ",           WHITESPACE ) );
+    fail_unless(    singleTokenString( L"\n",           L"\n",          WHITESPACE ) );
+    fail_unless(    singleTokenString( L"\r",           L"\r",          WHITESPACE ) );
+    fail_unless(    singleTokenString( L"\t",           L"\t",          WHITESPACE ) );
+    fail_unless(    singleTokenString( L"\f",           L"\f",          WHITESPACE ) );
+    fail_unless(    singleTokenString( L"\r\n",         L"\r\n",        WHITESPACE ) );
+    fail_unless(    singleTokenString( L" \r\t\n   ",   L" \r\t\n   ",  WHITESPACE ) );
+}
+END_TEST
+START_TEST( test_tokenizer_types_identifier_single )
 {
     //                                 Tokenize         Expected        Type 
     fail_unless(    singleTokenString( L"identifier",   L"identifier",  IDENTIFIER ) );
@@ -89,7 +101,7 @@ START_TEST (test_tokenizer_types_identifier_single)
     fail_unless(    singleTokenString( L"identifieï",   L"identifieï",  IDENTIFIER ), "Unicode characters are valid at the end of identifiers." );
 }
 END_TEST
-START_TEST (test_tokenizer_types_atkeyword_single)
+START_TEST( test_tokenizer_types_atkeyword_single )
 {
     //                                 Tokenize             Expected        Type 
     fail_unless(    singleTokenString( L"@keyword",     L"keyword",     ATKEYWORD ) );
@@ -98,7 +110,7 @@ START_TEST (test_tokenizer_types_atkeyword_single)
     fail_unless( notSingleTokenString( L"@4eyword",     L"4eyword",     ATKEYWORD ), "@keywords cannot start with a number." );
 }
 END_TEST
-START_TEST (test_tokenizer_types_hashkeyword_single)
+START_TEST( test_tokenizer_types_hashkeyword_single )
 {
     //                                 Tokenize             Expected        Type 
     fail_unless(    singleTokenString( L"#keyword",     L"keyword",     HASHKEYWORD ) );
@@ -107,7 +119,7 @@ START_TEST (test_tokenizer_types_hashkeyword_single)
     fail_unless(    singleTokenString( L"#4eyword",     L"4eyword",     HASHKEYWORD ), "#keywords can start with a number." );
 }
 END_TEST
-START_TEST (test_tokenizer_types_string_single)
+START_TEST( test_tokenizer_types_string_single )
 {
     //                                 Tokenize             Expected        Type 
     fail_unless(    singleTokenString( L"'string'",         L"string",      STRING ) );
@@ -154,6 +166,19 @@ START_TEST( test_tokenizer_types_percentage_single )
     fail_unless( notSingleTokenString( L"-12-3.4%", L"-12-3.4%",    PERCENTAGE ), "Percentages can't contain more than one negation." );
 }
 END_TEST
+START_TEST( test_tokenizer_types_dimension_single )
+{
+    //                                 Tokenize         Expected        Type
+    fail_unless(    singleTokenString( L"1em",          L"1em",         DIMENSION ) );
+    fail_unless(    singleTokenString( L"1234em",       L"1234em",      DIMENSION ) );
+    fail_unless(    singleTokenString( L"12.34em",      L"12.34em",     DIMENSION ) );
+    fail_unless(    singleTokenString( L"-1em",         L"-1em",        DIMENSION ) );
+    fail_unless(    singleTokenString( L"-1234em",      L"-1234em",     DIMENSION ) );
+    fail_unless(    singleTokenString( L"-12.34em",     L"-12.34em",    DIMENSION ) );
+    fail_unless( notSingleTokenString( L"-12.3.4em",    L"-12.3.4em",   DIMENSION ), "Dimensions can't contain more than one decimal point." );
+    fail_unless( notSingleTokenString( L"-12-3.4em",    L"-12-3.4em",   DIMENSION ), "Dimensions can't contain more than one negation." );
+}
+END_TEST
 
 
 
@@ -172,12 +197,14 @@ Suite * tokenizer_suite (void) {
     //  Tokenization: Token Types
     //
     TCase *tc_types = tcase_create( "Token Types" );
+    tcase_add_test( tc_types, test_tokenizer_types_whitespace_single );
     tcase_add_test( tc_types, test_tokenizer_types_identifier_single );
     tcase_add_test( tc_types, test_tokenizer_types_atkeyword_single );
     tcase_add_test( tc_types, test_tokenizer_types_hashkeyword_single );
     tcase_add_test( tc_types, test_tokenizer_types_string_single );
     tcase_add_test( tc_types, test_tokenizer_types_number_single );
     tcase_add_test( tc_types, test_tokenizer_types_percentage_single );
+    tcase_add_test( tc_types, test_tokenizer_types_dimension_single );
     suite_add_tcase( s, tc_types );
     return s;
 }
