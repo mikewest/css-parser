@@ -207,6 +207,51 @@ Token *parseHashkeyword( Tokenizer *tokenizer ) {
     t->start    = start;
     return t;
 }
+/////////////////////////////////////
+//
+//  Number
+//
+int isNumberStart( StatefulString *ss, unsigned int offset ) {
+    return (
+        isNumeric( ss_peekx( ss, offset ) ) ||
+        (
+            ss_peekx( ss, offset ) == L'-'  &&
+            isNumeric( ss_peekx( ss, offset + 1 ) )
+        )
+    );
+}
+Token *parseNumber( Tokenizer *tokenizer ) {
+    StatefulString *ss = tokenizer->ss_;
+    assert( isNumberStart( ss, 0 ) );
+
+    int start, length;
+    StatefulStringPosition pos1, pos2;
+
+    start           = ss->next_index;
+    length          = 0;
+    pos1            = ss->next_position;
+    TokenType type  = NUMBER;
+    int     isFloat = 0;
+    wchar_t temp;
+    while (
+        isNumeric( ss_peek( ss ) )                  ||
+        ( ss_peek( ss ) == L'-' && length == 0 )    ||
+        ( ss_peek( ss ) == L'.' && !isFloat )
+    ) {
+        temp = ss_getchar( ss );
+        if ( temp == L'.' ) {
+            isFloat = 1;
+        }
+        length++;
+    }
+    if ( ss_peek( ss ) == L'%' ) {
+        ss_getchar( ss );
+        length++;
+        type = PERCENTAGE;
+    }
+    pos2    = ss->next_position;
+    return token_new( ss_substr( ss, start, length ), length, type, pos1, pos2 ); 
+}
 
 Token *tokenizer_next( Tokenizer *tokenizer ) {
     wchar_t c, next;
@@ -214,21 +259,25 @@ Token *tokenizer_next( Tokenizer *tokenizer ) {
 
     next = ss_peek( tokenizer->ss_ );
     while ( next != WEOF && !token ) {
-//  *   Strings
+//  Strings
         if ( isStringStart( tokenizer->ss_, 0 ) ) {
             token = parseString( tokenizer );
         }
-//  *   Identifier
+//  Identifier
         else if ( isIdentifierStart( tokenizer->ss_, 0 ) ) {
             token = parseIdentifier( tokenizer );
         }
-//  *   @keyword
+//  @keyword
         else if ( isAtkeywordStart( tokenizer->ss_, 0 ) ) {
             token = parseAtkeyword( tokenizer );
         }
-//  *   #keyword
+//  #keyword
         else if ( isHashkeywordStart( tokenizer->ss_, 0 ) ) {
             token = parseHashkeyword( tokenizer );
+        }
+//  Number
+        else if ( isNumberStart( tokenizer->ss_, 0 ) ) {
+            token = parseNumber( tokenizer );
         }
        
        

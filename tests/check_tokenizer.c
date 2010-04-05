@@ -128,6 +128,32 @@ START_TEST (test_tokenizer_types_string_single)
     fail_unless(    singleTokenString( L"\"str\\\ning\"",   L"str\\\ning",  STRING ), "Strings can contain escaped newlines." );
 }
 END_TEST
+START_TEST( test_tokenizer_types_number_single )
+{
+    //                                 Tokenize     Expected    Type
+    fail_unless(    singleTokenString( L"1",        L"1",       NUMBER ) );
+    fail_unless(    singleTokenString( L"1234",     L"1234",    NUMBER ) );
+    fail_unless(    singleTokenString( L"12.34",    L"12.34",   NUMBER ) );
+    fail_unless(    singleTokenString( L"-1",       L"-1",      NUMBER ) );
+    fail_unless(    singleTokenString( L"-1234",    L"-1234",   NUMBER ) );
+    fail_unless(    singleTokenString( L"-12.34",   L"-12.34",  NUMBER ) );
+    fail_unless( notSingleTokenString( L"-12.3.4",  L"-12.3.4", NUMBER ), "Numbers can't contain more than one decimal point." );
+    fail_unless( notSingleTokenString( L"-12-3.4",  L"-12-3.4", NUMBER ), "Numbers can't contain more than one negation." );
+}
+END_TEST
+START_TEST( test_tokenizer_types_percentage_single )
+{
+    //                                 Tokenize     Expected        Type
+    fail_unless(    singleTokenString( L"1%",       L"1%",          PERCENTAGE ) );
+    fail_unless(    singleTokenString( L"1234%",    L"1234%",       PERCENTAGE ) );
+    fail_unless(    singleTokenString( L"12.34%",   L"12.34%",      PERCENTAGE ) );
+    fail_unless(    singleTokenString( L"-1%",      L"-1%",         PERCENTAGE ) );
+    fail_unless(    singleTokenString( L"-1234%",   L"-1234%",      PERCENTAGE ) );
+    fail_unless(    singleTokenString( L"-12.34%",  L"-12.34%",     PERCENTAGE ) );
+    fail_unless( notSingleTokenString( L"-12.3.4%", L"-12.3.4%",    PERCENTAGE ), "Percentages can't contain more than one decimal point." );
+    fail_unless( notSingleTokenString( L"-12-3.4%", L"-12-3.4%",    PERCENTAGE ), "Percentages can't contain more than one negation." );
+}
+END_TEST
 
 
 
@@ -150,6 +176,8 @@ Suite * tokenizer_suite (void) {
     tcase_add_test( tc_types, test_tokenizer_types_atkeyword_single );
     tcase_add_test( tc_types, test_tokenizer_types_hashkeyword_single );
     tcase_add_test( tc_types, test_tokenizer_types_string_single );
+    tcase_add_test( tc_types, test_tokenizer_types_number_single );
+    tcase_add_test( tc_types, test_tokenizer_types_percentage_single );
     suite_add_tcase( s, tc_types );
     return s;
 }
