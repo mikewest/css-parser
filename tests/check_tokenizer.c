@@ -93,6 +93,9 @@ START_TEST (test_tokenizer_types_atkeyword_single)
 {
     //                                 Tokenize             Expected        Type 
     fail_unless(    singleTokenString( L"@keyword",     L"keyword",     ATKEYWORD ) );
+    fail_unless(    singleTokenString( L"@-keyword",    L"-keyword",    ATKEYWORD ), "@keywords can start with a `-`." );
+    fail_unless( notSingleTokenString( L"@--keyword",   L"--keyword",   ATKEYWORD ), "@keywords cannot start with a double `-`." );
+    fail_unless( notSingleTokenString( L"@4eyword",     L"4eyword",     ATKEYWORD ), "@keywords cannot start with a number." );
 }
 END_TEST
 START_TEST (test_tokenizer_types_hashkeyword_single)
