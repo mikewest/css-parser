@@ -41,6 +41,7 @@ void token_free( Token *t ) {
     free( t->start );
     free( t->end );
     free( t->value );
+    free( t->error );
     free( t );
 }
 void token_print( const Token *t ) {

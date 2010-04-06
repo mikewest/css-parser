@@ -140,6 +140,8 @@ Token *parseString( Tokenizer *tokenizer ) {
     }
     if ( wcscmp( error, L"" ) != 0 ) {
         tokenizer_error( tokenizer, error, token );
+    } else {
+        free( error );
     }
     return token;
 }
@@ -308,7 +310,7 @@ Token *parseUrl( Tokenizer *tokenizer ) {
     StatefulString *ss = tokenizer->ss_;
     assert( isUrlStart( ss, 0 ) );
 
-    int start, length, isString;
+    int start, length;
     StatefulStringPosition pos1, pos2;
     Token   *token;
     wchar_t *error = malloc( 201 * sizeof( wchar_t ) );
@@ -378,14 +380,116 @@ Token *parseUrl( Tokenizer *tokenizer ) {
         }
     }
 
-    // eturn the token.
+    // Return the token.
     pos2    = ss->next_position;
     token   = token_new( ss_substr( ss, start, length ), length, type, pos1, pos2 ); 
 
     if ( wcscmp( error, L"" ) != 0 ) {
         tokenizer_error( tokenizer, error, token );
+    } else {
+        free( error );
+    }
+    return token;
+}
+/////////////////////////////////////
+//
+//  CDO/CDC
+//
+int isCDOStart( StatefulString *ss, unsigned int offset ) {
+    return (
+        ss_peekx( ss, offset     ) == L'<'  &&
+        ss_peekx( ss, offset + 1 ) == L'!'  &&
+        ss_peekx( ss, offset + 2 ) == L'-'  &&
+        ss_peekx( ss, offset + 3 ) == L'-'
+    );
+}
+int isCDCStart( StatefulString *ss, unsigned int offset ) {
+    return (
+        ss_peekx( ss, offset     ) == L'-'  &&
+        ss_peekx( ss, offset + 1 ) == L'-'  &&
+        ss_peekx( ss, offset + 2 ) == L'>'
+    );
+}
+int isSGMLCommentStart( StatefulString *ss, unsigned int offset ) {
+    return ( isCDOStart( ss, offset ) || isCDCStart( ss, offset ) );
+}
+Token *parseSGMLComment( Tokenizer *tokenizer ) {
+    StatefulString *ss = tokenizer->ss_;
+    assert( isCDOStart( ss, 0 ) || isCDCStart( ss, 0 ) );
+
+    int start, length;
+    StatefulStringPosition pos1, pos2;
+
+    start               = ss->next_index;
+    pos1                = ss->next_position;
+    length              = 4;
+    TokenType   type    = SGML_COMMENT_OPEN;
+    if ( isCDCStart( ss, 0 ) ) {
+        type    = SGML_COMMENT_CLOSE;
+        length  = 3;
+    }
+    for ( int i = 0; i<length; i++ ) {
+        ss_getchar( ss );
+    }
+    pos2    = ss->next_position;
+    return token_new( ss_substr( ss, start, length ), length, type, pos1, pos2 ); 
+}
+/////////////////////////////////////
+//
+//  Comments
+//
+int isCommentStart( StatefulString *ss, unsigned int offset ) {
+    return(
+        ss_peekx( ss, offset )      == L'/' &&
+        ss_peekx( ss, offset + 1 )  == L'*'
+    );
+}
+Token *parseComment( Tokenizer *tokenizer ) {
+    StatefulString *ss = tokenizer->ss_;
+    assert( isCommentStart( ss, 0 ) );
+
+    int start, length;
+    StatefulStringPosition pos1, pos2;
+    Token *token;
+    wchar_t *error = malloc( 201 * sizeof( wchar_t ) );
+    error[ 0 ] = L'\0';
+
+    start               = ss->next_index;
+    pos1                = ss->next_position;
+    length              = 2;
+    TokenType   type    = COMMENT;
+
+    ss_getchar( ss );   ss_getchar( ss );   // Throw away `/*`
+    while (
+        ss_peek( ss ) != WEOF               &&
+        (
+            ss_peek( ss ) != L'*'       ||
+            ss_peekx( ss, 1 ) != L'/'
+        )
+    ) {
+        length++;
+        if ( ss_getchar( ss ) == L'\\' ) {
+            ss_getchar( ss );
+            length++;
+        }
     }
 
+    if ( ss_peek( ss ) == WEOF ) {
+        swprintf( error, 200, L"Encountered end-of-file while parsing a comment.  Probably a forgotten `*/`." );
+    } else {
+        ss_getchar( ss ); ss_getchar( ss ); // Throw away `*/`
+        length += 2;
+    }
+
+    // Return the token.
+    pos2    = ss->next_position;
+    token   = token_new( ss_substr( ss, start, length ), length, type, pos1, pos2 ); 
+
+    if ( wcscmp( error, L"" ) != 0 ) {
+        tokenizer_error( tokenizer, error, token );
+    } else {
+        free( error );
+    }
     return token;
 }
 
@@ -407,9 +511,17 @@ Token *tokenizer_next( Tokenizer *tokenizer ) {
         else if ( isStringStart( tokenizer->ss_, 0 ) ) {
             token = parseString( tokenizer );
         }
- //  URL
+//  Comments
+        else if ( isCommentStart( tokenizer->ss_, 0 ) ) {
+            token = parseComment( tokenizer );
+        }
+//  URL
         else if ( isUrlStart( tokenizer->ss_, 0 ) ) {
             token = parseUrl( tokenizer );
+        }
+//  SGML Comments
+        else if ( isSGMLCommentStart( tokenizer->ss_, 0 ) ) {
+            token = parseSGMLComment( tokenizer );
         }
 //  Identifier
         else if ( isIdentifierStart( tokenizer->ss_, 0 ) ) {
@@ -427,6 +539,7 @@ Token *tokenizer_next( Tokenizer *tokenizer ) {
         else if ( isNumberStart( tokenizer->ss_, 0 ) ) {
             token = parseNumber( tokenizer );
         }
+
 
        
         else {
