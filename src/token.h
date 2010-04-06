@@ -7,7 +7,7 @@ typedef enum {
     NUMBER,             //  {num}
     DIMENSION,          //  {num}{identifier}
     PERCENTAGE,         //  {num}%
-    URI,                //  url\({whitespace}{string}{whitespace}\)
+    URL,                //  url\({whitespace}{string}{whitespace}\)
                         //  url\({whitespace}([!#$%&*-~]|{nonascii}|{escape})*{whitespace}\)
     UNICODE,            //  u\+[0-9a-f?]{1,6}(-[0-9a-f]{1,6})?
     SGML_COMMENT_OPEN,  //  <!--
@@ -35,14 +35,21 @@ typedef enum {
     DELIM               //  Everything else.
 } TokenType;
 
-typedef struct {
+struct TokenError;
+struct Token;
+
+typedef struct TokenError {
+    wchar_t *message;
+    struct  Token   *token;
+} TokenError;
+
+typedef struct Token {
     StatefulStringPosition  *start;
     StatefulStringPosition  *end;
     TokenType               type;
     wchar_t                 *value;
-
-    // Internal: No touchies, plz!
-    unsigned int            length_;
+    struct  TokenError      *error;
+    unsigned int            length;
 } Token;
 
 Token* token_new( const wchar_t *value, const unsigned int length, const TokenType type, const StatefulStringPosition start, const StatefulStringPosition end );

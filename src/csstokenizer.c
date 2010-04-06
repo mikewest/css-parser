@@ -19,7 +19,7 @@ Tokenizer *tokenizer_new( StatefulString *ss ) {
     temp->numtokens     = 0;
     temp->numerrors     = 0;
     temp->maxerrors_    = BASE_MAXERRORS;
-    temp->errors        = malloc( ( BASE_MAXERRORS + 1 ) * sizeof( TokenizerError* ) );
+    temp->errors        = malloc( ( BASE_MAXERRORS + 1 ) * sizeof( TokenError* ) );
     temp->ss_           = ss;
     temp->maxtokens_    = BASE_MAXTOKENS;
     temp->tokens_       = malloc( ( BASE_MAXTOKENS + 1 ) * sizeof( Token* ) );
@@ -49,20 +49,21 @@ Token* addtoken( Tokenizer *tokenizer, const wchar_t *value,
     return token;
 }
 
-TokenizerError *tokenizer_error( Tokenizer *tokenizer, wchar_t *msg, Token *token ) {
-    TokenizerError *error = malloc( sizeof( TokenizerError ) );
+TokenError *tokenizer_error( Tokenizer *tokenizer, wchar_t *msg, Token *token ) {
+    TokenError *error = malloc( sizeof( TokenError ) );
     error->message  = msg;
     error->token    = token;
 
     if ( tokenizer->numerrors >= tokenizer->maxerrors_ ) {
         tokenizer->maxerrors_ *= 2;
-        tokenizer->errors = realloc( tokenizer->errors, ( tokenizer->maxerrors_ + 1 ) * sizeof( TokenizerError* ) );
+        tokenizer->errors = realloc( tokenizer->errors, ( tokenizer->maxerrors_ + 1 ) * sizeof( TokenError* ) );
         if ( tokenizer->errors == NULL ) {
             allocationerror( tokenizer->maxerrors_, L"Tokenizer::tokenizer_error" );
             exit( EXIT_FAILURE );
         }
     }
     tokenizer->errors[ tokenizer->numerrors++ ] = error;
+    token->error = error;
     return error; 
 }
 
@@ -286,7 +287,112 @@ Token *parseNumber( Tokenizer *tokenizer ) {
     pos2    = ss->next_position;
     return token_new( ss_substr( ss, start, length ), length, type, pos1, pos2 ); 
 }
+/////////////////////////////////////
+//
+//  Url 
+//
+int isUrlStart( StatefulString *ss, unsigned int offset ) {
+    return (
+        ss_peekx( ss, offset     ) == L'u'  &&
+        ss_peekx( ss, offset + 1 ) == L'r'  &&
+        ss_peekx( ss, offset + 2 ) == L'l'  &&
+        ss_peekx( ss, offset + 3 ) == L'('  &&
+        (
+            isUrlChar( ss_peekx( ss, offset + 4 ) ) ||
+            isStringStart( ss, offset + 4 )         ||
+            isWhitespaceStart( ss, offset + 4 )
+        )
+    );
+}
+Token *parseUrl( Tokenizer *tokenizer ) {
+    StatefulString *ss = tokenizer->ss_;
+    assert( isUrlStart( ss, 0 ) );
 
+    int start, length, isString;
+    StatefulStringPosition pos1, pos2;
+    Token   *token;
+    wchar_t *error = malloc( 201 * sizeof( wchar_t ) );
+    error[ 0 ] = L'\0';
+
+    start               = ss->next_index;
+    pos1                = ss->next_position;
+    TokenType   type    = URL;
+
+    // Throw away `url(`
+    for ( int i = 0; i<4; i++ ) {
+        ss_getchar( ss );
+    }
+    length          = 4;
+
+    //  Throw away leading whitespace
+    while ( isWhitespaceStart( ss, 0 ) ) {
+        ss_getchar( ss );
+        length++;
+    }
+
+    //  Process the url
+    if ( isStringStart( ss, 0 ) ) {
+        token   = parseString( tokenizer );
+        length += token->length + 2; // +2 for the quotes
+        if ( token->error != NULL ) {
+            length     -= 1;    // Error'd strings don't have a trailing quote
+            pos2        = ss->next_position;
+            Token *t    = token_new( ss_substr( ss, start, length ), length, type, pos1, pos2 );
+            t->error    = token->error;
+            ( token->error )->token = t;
+            free( token );
+            return t;
+        } else {
+            free( token );
+        }
+    } else if ( isUrlChar( ss_peek( ss ) ) ) {
+        while ( isUrlChar( ss_peek( ss ) ) ) {
+            ss_getchar( ss );
+            length++;
+        }
+    } else {
+        // ERROR:
+        if ( ss_peek( ss ) == WEOF ) {
+            swprintf( error, 200, L"Encountered end-of-file while parsing a URL." );
+        } else {
+            swprintf( error, 200, L"Encountered an invalid character (`%C`) while parsing a URL.", ss_peek( ss ) );
+        }
+    }
+
+    //  Throw away trailing whitespace
+    while ( isWhitespaceStart( ss, 0 ) ) {
+        ss_getchar( ss );
+        length++;
+    }
+
+    //  Grab the trailing `)`
+    if ( ss_peek( ss ) == L')' ) {
+        ss_getchar( ss );
+        length++;
+    } else {
+        // ERROR:
+        if ( ss_peek( ss ) == WEOF ) {
+            swprintf( error, 200, L"Encountered end-of-file while parsing a URL.  Expected a `)`." );
+        } else {
+            swprintf( error, 200, L"Encountered an invalid character (`%C`) while parsing a URL.  Expected a `)`.  Perhaps a typo?", ss_peek( ss ) );
+        }
+    }
+
+    // eturn the token.
+    pos2    = ss->next_position;
+    token   = token_new( ss_substr( ss, start, length ), length, type, pos1, pos2 ); 
+
+    if ( wcscmp( error, L"" ) != 0 ) {
+        tokenizer_error( tokenizer, error, token );
+    }
+
+    return token;
+}
+
+///////////////////////////////////////////////////////////////////////////
+//
+//  Parsing Interface
+//
 Token *tokenizer_next( Tokenizer *tokenizer ) {
     wchar_t c, next;
     Token *token = NULL;
@@ -300,6 +406,10 @@ Token *tokenizer_next( Tokenizer *tokenizer ) {
 //  Strings
         else if ( isStringStart( tokenizer->ss_, 0 ) ) {
             token = parseString( tokenizer );
+        }
+ //  URL
+        else if ( isUrlStart( tokenizer->ss_, 0 ) ) {
+            token = parseUrl( tokenizer );
         }
 //  Identifier
         else if ( isIdentifierStart( tokenizer->ss_, 0 ) ) {
@@ -317,7 +427,7 @@ Token *tokenizer_next( Tokenizer *tokenizer ) {
         else if ( isNumberStart( tokenizer->ss_, 0 ) ) {
             token = parseNumber( tokenizer );
         }
-       
+
        
         else {
             next = ss_getchar( tokenizer->ss_ );

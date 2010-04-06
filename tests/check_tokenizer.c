@@ -54,11 +54,19 @@ int processSingleTokenString( wchar_t *s, wchar_t *expected, TokenType type, int
         ( printFailure && !returnvalue ) ||
         ( printSuccess && returnvalue )
     ) {
-        wprintf( L"Token 1: `%S` (%d)\n", t1->value, t1->type );
-        wprintf( L"Token 2: `%S` (%d)\n", t2->value, t2->type );
+        wprintf( L"Token 1: `%S`\t(Length:%d,Error:%d,Type:%d)\n", t1->value, t1->length, ( t1->error != NULL ), t1->type );
+        if ( t1->error ) {
+            wprintf( L"-   ERROR: '%S'\n", ( t1->error )->message );
+        }
+        wprintf( L"Token 2: `%S`\t(Length:%d,Error:%d,Type:%d)\n", t2->value, t2->length, ( t2->error != NULL ), t2->type );
+        if ( t2->error ) {
+            wprintf( L"-   ERROR: '%S'\n", ( t2->error )->message );
+        }
     }
     token_free( t1 );
+    t1 = NULL;
     token_free( t2 );
+    t2 = NULL;
     tokenizer_free( tzr );
     ss_free( ss );
 
@@ -103,7 +111,7 @@ START_TEST( test_tokenizer_types_identifier_single )
 END_TEST
 START_TEST( test_tokenizer_types_atkeyword_single )
 {
-    //                                 Tokenize             Expected        Type 
+    //                                 Tokenize         Expected        Type 
     fail_unless(    singleTokenString( L"@keyword",     L"keyword",     ATKEYWORD ) );
     fail_unless(    singleTokenString( L"@-keyword",    L"-keyword",    ATKEYWORD ), "@keywords can start with a `-`." );
     fail_unless( notSingleTokenString( L"@--keyword",   L"--keyword",   ATKEYWORD ), "@keywords cannot start with a double `-`." );
@@ -112,7 +120,7 @@ START_TEST( test_tokenizer_types_atkeyword_single )
 END_TEST
 START_TEST( test_tokenizer_types_hashkeyword_single )
 {
-    //                                 Tokenize             Expected        Type 
+    //                                 Tokenize         Expected        Type 
     fail_unless(    singleTokenString( L"#keyword",     L"keyword",     HASHKEYWORD ) );
     fail_unless(    singleTokenString( L"#-keyword",    L"-keyword",    HASHKEYWORD ), "#keywords can start with a `-`." );
     fail_unless(    singleTokenString( L"#--keyword",   L"--keyword",   HASHKEYWORD ), "#keywords can start with a double `-`." );
@@ -179,7 +187,26 @@ START_TEST( test_tokenizer_types_dimension_single )
     fail_unless( notSingleTokenString( L"-12-3.4em",    L"-12-3.4em",   DIMENSION ), "Dimensions can't contain more than one negation." );
 }
 END_TEST
+START_TEST( test_tokenizer_types_url_single )
+{
+    //                                 Tokenize             Expected                Type
+    fail_unless(    singleTokenString( L"url(/)",           L"url(/)",              URL ) );
+    fail_unless(    singleTokenString( L"url(omg)",         L"url(omg)",            URL ) );
+    fail_unless(    singleTokenString( L"url( omg)",        L"url( omg)",           URL ) );
+    fail_unless(    singleTokenString( L"url(omg )",        L"url(omg )",           URL ) );
+    fail_unless(    singleTokenString( L"url( omg )",       L"url( omg )",          URL ) );
+    fail_unless(    singleTokenString( L"url('omg')",       L"url('omg')",          URL ) );
+    fail_unless(    singleTokenString( L"url('omg' )",      L"url('omg' )",         URL ) );
+    fail_unless(    singleTokenString( L"url( 'omg')",      L"url( 'omg')",         URL ) );
+    fail_unless(    singleTokenString( L"url( 'omg' )",     L"url( 'omg' )",        URL ) );
+    fail_unless(    singleTokenString( L"url(\"omg\")",     L"url(\"omg\")",        URL ) );
+    fail_unless(    singleTokenString( L"url(\"omg\" )",    L"url(\"omg\" )",       URL ) );
+    fail_unless(    singleTokenString( L"url( \"omg\")",    L"url( \"omg\")",       URL ) );
+    fail_unless(    singleTokenString( L"url( \"omg\" )",   L"url( \"omg\" )",      URL ) );
 
+    fail_unless( notSingleTokenString( L"url(')",           L"url(')",      URL ), "Unclosed strings should error off." );
+}
+END_TEST
 
 
 Suite * tokenizer_suite (void) {
@@ -205,6 +232,7 @@ Suite * tokenizer_suite (void) {
     tcase_add_test( tc_types, test_tokenizer_types_number_single );
     tcase_add_test( tc_types, test_tokenizer_types_percentage_single );
     tcase_add_test( tc_types, test_tokenizer_types_dimension_single );
+    tcase_add_test( tc_types, test_tokenizer_types_url_single );
     suite_add_tcase( s, tc_types );
     return s;
 }

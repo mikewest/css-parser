@@ -1,12 +1,7 @@
 typedef struct {
-    wchar_t *message;
-    Token   *token;
-} TokenizerError;
-
-typedef struct {
     unsigned int    numtokens;
     unsigned int    numerrors;
-    TokenizerError  **errors;
+    TokenError      **errors;
 
     //  Internal: No touchies, plz!
     StatefulString  *ss_;

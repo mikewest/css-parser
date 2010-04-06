@@ -11,14 +11,28 @@ Token* token_new( const wchar_t *value, const unsigned int length, const TokenTy
     Token *temp     = malloc( sizeof( Token ) );
     temp->type      = type;
     temp->value     = malloc( ( length + 1 ) * sizeof( wchar_t ) );
-    temp->length_   = length;
+    if ( temp->value == NULL ) {
+        allocationerror( length, L"Token::token_new" );
+        exit( EXIT_FAILURE );
+    }
+    temp->length    = length;
+    temp->error     = NULL;
     wcsncpy( temp->value, value, length );
+    temp->value[ length ] = L'\0';
 
     temp->start             = malloc( sizeof( StatefulStringPosition ) );
+    if ( temp->start == NULL ) {
+        allocationerror( sizeof( StatefulStringPosition ), L"Token::token_new" );
+        exit( EXIT_FAILURE );
+    }
     (temp->start)->line     = start.line;
     (temp->start)->column   = start.column;
 
     temp->end           = malloc( sizeof( StatefulStringPosition ) );
+    if ( temp->end == NULL ) {
+        allocationerror( sizeof( StatefulStringPosition ), L"Token::token_new" );
+        exit( EXIT_FAILURE );
+    }
     (temp->end)->line   = end.line;
     (temp->end)->column = end.column;
     return temp;
@@ -33,16 +47,21 @@ void token_print( const Token *t ) {
     wprintf( L"TOKEN: {\n" );
     wprintf( L"    Start:  Line %d, Column %d\n",   (t->start)->line, (t->start)->column );
     wprintf( L"    End:    Line %d, Column %d\n",   (t->end)->line, (t->end)->column );
-    wprintf( L"    Value:  `%S` (%d)\n",            t->value, t->length_ );
+    wprintf( L"    Value:  `%S` (%d)\n",            t->value, t->length );
     wprintf( L"    Type:   %d\n",                   t->type );
     wprintf( L"}\n" );
 }
 int token_eq( const Token *t1, const Token *t2 ) {
     return (
         //  Lengths
-        t1->length_ == t2->length_                          &&
+        t1->length == t2->length                            &&
+        //  Error state
+        (
+            ( t1->error == NULL && t2->error == NULL )  ||
+            ( t1->error != NULL && t2->error != NULL )
+        )                                                   &&
         //  Value
-        wcsncmp( t1->value, t2->value, t1->length_ ) == 0   &&
+        wcsncmp( t1->value, t2->value, t1->length ) == 0    &&
         //  Type
         t1->type == t2->type
     );

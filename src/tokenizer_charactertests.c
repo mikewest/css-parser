@@ -14,11 +14,17 @@ int isNonAscii( wchar_t c ) {
 
 int isUrlChar( wchar_t c ) {
     return (
-        c   ==  0x9     ||
-        c   ==  0x21    ||
-        ( c >=  0x23    &&  c   <= 0x26 ) ||
-        ( c >=  0x27    &&  c   <= 0x7E ) ||
-        isNonAscii( c )
+        (
+            c   ==  0x9     ||
+            c   ==  0x21    ||
+            ( c >=  0x23    &&  c   <= 0x26 ) ||
+            ( c >=  0x27    &&  c   <= 0x7E ) ||
+            isNonAscii( c )
+        )
+        // @TODO:   Fix this horrible hack.  `)` is valid character in URLs
+        //          but I don't know how to parse it without backtracking:
+        //          `url())` for instance.
+        && c != L')'
     );
 }
 int isStringChar( wchar_t c ) {

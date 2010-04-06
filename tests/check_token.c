@@ -49,7 +49,7 @@ START_TEST (test_csstoken_create_end)
 END_TEST
 START_TEST (test_csstoken_create_length)
 {
-    fail_unless( t1->length_ == length, "After creation, length should be set correctly." );
+    fail_unless( t1->length == length, "After creation, length should be set correctly." );
 }
 END_TEST
 START_TEST (test_csstoken_create_type)
@@ -86,7 +86,7 @@ START_TEST (test_csstoken_eq_end)
 END_TEST
 START_TEST (test_csstoken_eq_length)
 {
-    t1->length_ = 0;
+    t1->length = 0;
     fail_unless( !token_eeq( t1, t2 ), "Tokens with different lengths ought not be equal." );
 }
 END_TEST
