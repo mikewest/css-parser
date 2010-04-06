@@ -1,17 +1,17 @@
 typedef enum {
-    IDENTIFIER,         //  {identifier}
-    NAME,               //  Less strict than identifier, really shouldn't exist on it's own.
-    ATKEYWORD,          //  @{identifier}
-    HASHKEYWORD,        //  #{name}
-    STRING,             //  {string}
-    NUMBER,             //  {num}
-    DIMENSION,          //  {num}{identifier}
-    PERCENTAGE,         //  {num}%
-    URL,                //  url\({whitespace}{string}{whitespace}\)
+    IDENTIFIER,         //  {identifier}                                                        *
+    NAME,               //  Less strict than identifier, really shouldn't exist on it's own.    *
+    ATKEYWORD,          //  @{identifier}                                                       *
+    HASHKEYWORD,        //  #{name}                                                             *
+    STRING,             //  {string}                                                            *
+    NUMBER,             //  {num}                                                               *
+    DIMENSION,          //  {num}{identifier}                                                   *
+    PERCENTAGE,         //  {num}%                                                              *
+    URL,                //  url\({whitespace}{string}{whitespace}\)                             ~   @TODO: URLs can contain `)`
                         //  url\({whitespace}([!#$%&*-~]|{nonascii}|{escape})*{whitespace}\)
     UNICODE,            //  u\+[0-9a-f?]{1,6}(-[0-9a-f]{1,6})?
-    SGML_COMMENT_OPEN,  //  <!--
-    SGML_COMMENT_CLOSE, //  -->
+    SGML_COMMENT_OPEN,  //  <!--                                                                *
+    SGML_COMMENT_CLOSE, //  -->                                                                 *
     COLON,              //  :
     SEMICOLON,          //  ;
     CURLY_BRACE_OPEN,   //  {
@@ -24,8 +24,8 @@ typedef enum {
     PERCENT,            //  %
     HASH,               //  #
     DOT,                //  .
-    WHITESPACE,         //  [ \t\r\n\f]+
-    COMMENT,            //  \/\*[^*]*\*+([^/*][^*]*\*+)*\/
+    WHITESPACE,         //  [ \t\r\n\f]+                                                        *
+    COMMENT,            //  \/\*[^*]*\*+([^/*][^*]*\*+)*\/                                      *
     FUNCTION,           //  {identifier}\(
     INCLUDES,           //  ~=
     DASHMATCH,          //  |=
