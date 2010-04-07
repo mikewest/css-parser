@@ -249,6 +249,28 @@ START_TEST( test_tokenizer_types_comment_single )
     fail_unless( errSingleTokenString( L"/* \\*/abc",       L"/* \\*/abc",          COMMENT ) );
 }
 END_TEST
+START_TEST( test_tokenizer_types_operator_single )
+{
+    //                                 Tokenize     Expected    Type
+    fail_unless(    singleTokenString( L":",        L":",       COLON ) );
+    fail_unless(    singleTokenString( L";",        L";",       SEMICOLON ) );
+    fail_unless(    singleTokenString( L"{",        L"{",       CURLY_BRACE_OPEN ) );
+    fail_unless(    singleTokenString( L"}",        L"}",       CURLY_BRACE_CLOSE ) );
+    fail_unless(    singleTokenString( L"[",        L"[",       SQUARE_BRACE_OPEN ) );
+    fail_unless(    singleTokenString( L"]",        L"]",       SQUARE_BRACE_CLOSE ) );
+    fail_unless(    singleTokenString( L"(",        L"(",       PAREN_OPEN ) );
+    fail_unless(    singleTokenString( L")",        L")",       PAREN_CLOSE ) );
+    fail_unless(    singleTokenString( L"@",        L"@",       AT ) );
+    fail_unless(    singleTokenString( L"%",        L"%",       PERCENT ) );
+    fail_unless(    singleTokenString( L"#",        L"#",       HASH ) );
+    fail_unless(    singleTokenString( L".",        L".",       DOT ) );
+    fail_unless(    singleTokenString( L"~=",       L"~=",      INCLUDES ) );
+    fail_unless(    singleTokenString( L"|=",       L"|=",      DASHMATCH) );
+    fail_unless(    singleTokenString( L"^=",       L"^=",      PREFIXMATCH ) );
+    fail_unless(    singleTokenString( L"$=",       L"$=",      SUFFIXMATCH ) );
+    fail_unless(    singleTokenString( L"*=",       L"*=",      SUBSTRINGMATCH ) );
+}
+END_TEST
 
 Suite * tokenizer_suite (void) {
     Suite *s = suite_create( "CSS Tokenizer" );

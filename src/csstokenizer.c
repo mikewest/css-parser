@@ -492,6 +492,93 @@ Token *parseComment( Tokenizer *tokenizer ) {
     }
     return token;
 }
+/////////////////////////////////////
+//
+//  Operators, et al.
+//
+Token *parseEverythingElse( Tokenizer *tokenizer ) {
+    StatefulString *ss = tokenizer->ss_;
+
+    int start, length;
+    StatefulStringPosition pos1, pos2;
+
+    start               = ss->next_index;
+    pos1                = ss->next_position;
+    TokenType   type    = DELIM;
+    length              = 1;
+
+    wchar_t temp        = ss_getchar( ss );
+
+    if (
+        ( temp== L'~' || temp == L'|' || temp == L'*' || temp == L'^' || temp == L'$' ) &&
+        ss_peek( ss ) == L'='
+    ) {
+        ss_getchar( ss );
+        length++;
+    }
+
+    if ( length == 1 ) {
+        switch ( temp ) {
+            case L'{':
+                type    =   CURLY_BRACE_OPEN;
+                break;
+            case L'}':
+                type    =   CURLY_BRACE_CLOSE;
+                break;
+            case L'[':
+                type    =   SQUARE_BRACE_OPEN;
+                break;
+            case L']':
+                type    =   SQUARE_BRACE_CLOSE;
+                break;
+            case L'(':
+                type    =   PAREN_OPEN;
+                break;
+            case L')':
+                type    =   PAREN_CLOSE;
+                break;
+            case L':':
+                type    =   COLON;
+                break;
+            case L';':
+                type    =   SEMICOLON;
+                break;
+            case L'@':
+                type    =   AT;
+                break;
+            case L'#':
+                type    =   HASH;
+                break;
+            case L'%':
+                type    =   PERCENT;
+                break;
+            case L'.':
+                type    =   DOT;
+                break;
+        }
+    } else if ( length == 2 ) {
+        switch ( temp ) {
+            case L'~':
+                type    =   INCLUDES;
+                break;
+            case L'|':
+                type    =   DASHMATCH;
+                break;
+            case L'^':
+                type    =   PREFIXMATCH;
+                break;
+            case L'$':
+                type    =   SUFFIXMATCH;
+                break;
+            case L'*':
+                type    =   SUBSTRINGMATCH;
+                break;
+        }
+    }
+    pos2    = ss->next_position;
+    return token_new( ss_substr( ss, start, length ), length, type, pos1, pos2 ); 
+}
+
 
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -539,18 +626,10 @@ Token *tokenizer_next( Tokenizer *tokenizer ) {
         else if ( isNumberStart( tokenizer->ss_, 0 ) ) {
             token = parseNumber( tokenizer );
         }
-
-
-       
+//  Operators & Delims (everything else)
         else {
-            next = ss_getchar( tokenizer->ss_ );
+            token = parseEverythingElse( tokenizer );
         }
-        /* if ( isIdentifierStart( next ) ) { */
-            /* token = parseIdentifier( tokenizer->ss_ ); */
-        /* } else { */
-            /* ss_getchar( tokenizer->ss_ ); */
-        /* } */
-        /* next = ss_getchar( tokenizer->ss_ ); */
     }
     if ( token ) {
         return token;
