@@ -131,6 +131,15 @@ START_TEST( test_tokenizer_types_identifier_single )
     fail_unless(    singleTokenString( L"identïfier",   L"identïfier",  IDENTIFIER ), "Unicode characters are valid in identifiers." );
     fail_unless(    singleTokenString( L"ïdentifier",   L"ïdentifier",  IDENTIFIER ), "Unicode characters are valid at the beginning of identifiers." );
     fail_unless(    singleTokenString( L"identifieï",   L"identifieï",  IDENTIFIER ), "Unicode characters are valid at the end of identifiers." );
+
+    //  @TODO: Should throw warnings for these (e.g. `ident\EFfier` doesn't contain `\EF`, but `\EFf` )
+    fail_unless(    singleTokenString( L"ident\\EFfier",    L"ident\\EFfier",   IDENTIFIER ), "Unicode escape sequences are valid in identifiers." );
+    fail_unless(    singleTokenString( L"\\EFdentifier",    L"\\EFdentifier",   IDENTIFIER ), "Unicode escape sequences are valid at the beginning of identifiers." );
+    fail_unless(    singleTokenString( L"identifie\\EF",    L"identifie\\EF",   IDENTIFIER ), "Unicode escape sequences are valid at the end of identifiers." );
+
+    fail_unless(    singleTokenString( L"ident\\EF fier",    L"ident\\EF fier",   IDENTIFIER ), "Unicode escape sequences are valid in identifiers." );
+    fail_unless(    singleTokenString( L"\\EF dentifier",    L"\\EF dentifier",   IDENTIFIER ), "Unicode escape sequences are valid at the beginning of identifiers." );
+    fail_unless(    singleTokenString( L"identifie\\EF",    L"identifie\\EF",   IDENTIFIER ), "Unicode escape sequences are valid at the end of identifiers." );
 }
 END_TEST
 START_TEST( test_tokenizer_types_function_single )

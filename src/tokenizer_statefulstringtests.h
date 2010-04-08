@@ -1,0 +1,12 @@
+int isUnicodeSequenceStart( StatefulString *ss, unsigned int offset );
+int isIdentifierStart( StatefulString *ss, unsigned int offset );
+int isWhitespaceStart( StatefulString *ss, unsigned int offset );
+int isStringStart( StatefulString *ss, unsigned int offset );
+int isAtkeywordStart( StatefulString *ss, unsigned int offset );
+int isHashkeywordStart( StatefulString *ss, unsigned int offset );
+int isNumberStart( StatefulString *ss, unsigned int offset );
+int isUrlStart( StatefulString *ss, unsigned int offset );
+int isCDOStart( StatefulString *ss, unsigned int offset );
+int isCDCStart( StatefulString *ss, unsigned int offset );
+int isSGMLCommentStart( StatefulString *ss, unsigned int offset );
+int isCommentStart( StatefulString *ss, unsigned int offset );

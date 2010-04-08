@@ -26,7 +26,7 @@ checktoken: statefulstring.out token.out $(TEST)/check_token.c
 	@$(BUILD_ROOT)/checktoken
 
 checktokenizer: statefulstring.out token.out tokenizer.out $(TEST)/check_tokenizer.c
-	@$(CC) -g -o $(BUILD_ROOT)/checktokenizer $(STATEFULSTRING_SRC).c $(TOKEN_SRC).c $(TOKENIZER_SRC).c $(SRC)/tokenizer_charactertests.c $(TEST)/check_tokenizer.c $(CHECK)
+	@$(CC) -g -o $(BUILD_ROOT)/checktokenizer $(STATEFULSTRING_SRC).c $(TOKEN_SRC).c $(TOKENIZER_SRC).c $(SRC)/tokenizer_charactertests.c $(SRC)/tokenizer_statefulstringtests.c $(TEST)/check_tokenizer.c $(CHECK)
 	@$(BUILD_ROOT)/checktokenizer
 
 scan:

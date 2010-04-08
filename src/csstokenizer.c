@@ -8,6 +8,7 @@
 #include "../src/token.h"
 #include "../src/csstokenizer.h"
 #include "../src/tokenizer_charactertests.h"
+#include "../src/tokenizer_statefulstringtests.h"
 
 #define BASE_MAXTOKENS  1024
 #define BASE_MAXERRORS  1024
@@ -75,9 +76,6 @@ TokenError *tokenizer_error( Tokenizer *tokenizer, wchar_t *msg, Token *token ) 
 //
 //  Whitespace
 //
-int isWhitespaceStart( StatefulString *ss, unsigned int offset ) {
-    return isWhitespace( ss_peekx( ss, offset ) );
-}
 Token *parseWhitespace( Tokenizer *tokenizer ) {
     StatefulString *ss = tokenizer->ss_;
     assert( isWhitespaceStart( ss, 0 ) );
@@ -99,9 +97,6 @@ Token *parseWhitespace( Tokenizer *tokenizer ) {
 //
 //  Strings
 //
-int isStringStart( StatefulString *ss, unsigned int offset ) {
-    return isQuote( ss_peekx( ss, offset ) );
-}
 Token *parseString( Tokenizer *tokenizer ) {
     StatefulString *ss = tokenizer->ss_;
     assert( isStringStart( ss, 0 ) );
@@ -150,21 +145,21 @@ Token *parseString( Tokenizer *tokenizer ) {
 //
 //  Identifiers
 //
-int isIdentifierStart( StatefulString *ss, unsigned int offset ) {
-    wchar_t next        = ss_peekx( ss, offset );
-    wchar_t nextnext    = ss_peekx( ss, offset + 1 );
-    
-    return (
-        // `next` is a valid identifier-start character
-        isNameStart( next )       ||
-        // OR, `next` is a dash, and the next character is
-        // a valid name-start character
-        ( next == L'-' && isNameStart( nextnext ) )
-    );
+int processChar( StatefulString *ss ) {
+    int length = isUnicodeSequenceStart( ss, 0 );
+    if ( length ) {
+        for ( int i = 0; i < length; i++ ) {
+            ss_getchar( ss );
+        }
+        return length;
+    } else {
+        ss_getchar( ss );
+        return 1;
+    }
 }
 Token *parseName( Tokenizer *tokenizer ) {
     StatefulString *ss = tokenizer->ss_;
-    assert( isNameChar( ss_peek( ss ) ) );
+    assert( isNameChar( ss_peek( ss ) ) || isUnicodeSequenceStart( ss, 0 ) );
 
     int start, length;
     StatefulStringPosition pos1, pos2;
@@ -172,9 +167,8 @@ Token *parseName( Tokenizer *tokenizer ) {
     start   = ss->next_index;
     length  = 0;
     pos1    = ss->next_position;
-    while ( isNameChar( ss_peek( ss ) ) ) {
-        ss_getchar( ss );
-        length++;
+    while ( isNameChar( ss_peek( ss ) ) || isUnicodeSequenceStart( ss, 0 ) ) {
+        length += processChar( ss );
     }
     if ( ss_peek( ss ) == L'(' ) {
         ss_getchar( ss );
@@ -196,12 +190,6 @@ Token *parseIdentifier( Tokenizer *tokenizer ) {
 //
 //  @keyword
 //
-int isAtkeywordStart( StatefulString *ss, unsigned int offset ) {
-    return (
-        ss_peekx( ss, offset ) == L'@'   &&
-        isIdentifierStart( ss, offset + 1 )
-    );
-}
 Token *parseAtkeyword( Tokenizer *tokenizer ) {
     assert( isAtkeywordStart( tokenizer->ss_, 0 ) );
 
@@ -219,12 +207,6 @@ Token *parseAtkeyword( Tokenizer *tokenizer ) {
 //
 //  #keyword
 //
-int isHashkeywordStart( StatefulString *ss, unsigned int offset ) {
-    return (
-        ss_peekx( ss, offset ) == L'#'   &&
-        isNameChar( ss_peekx( ss, offset + 1 ) )
-    );
-}
 Token *parseHashkeyword( Tokenizer *tokenizer ) {
     assert( isHashkeywordStart( tokenizer->ss_, 0 ) );
 
@@ -242,15 +224,7 @@ Token *parseHashkeyword( Tokenizer *tokenizer ) {
 //
 //  Number
 //
-int isNumberStart( StatefulString *ss, unsigned int offset ) {
-    return (
-        isNumeric( ss_peekx( ss, offset ) ) ||
-        (
-            ss_peekx( ss, offset ) == L'-'  &&
-            isNumeric( ss_peekx( ss, offset + 1 ) )
-        )
-    );
-}
+
 Token *parseNumber( Tokenizer *tokenizer ) {
     StatefulString *ss = tokenizer->ss_;
     assert( isNumberStart( ss, 0 ) );
@@ -297,19 +271,7 @@ Token *parseNumber( Tokenizer *tokenizer ) {
 //
 //  Url 
 //
-int isUrlStart( StatefulString *ss, unsigned int offset ) {
-    return (
-        ss_peekx( ss, offset     ) == L'u'  &&
-        ss_peekx( ss, offset + 1 ) == L'r'  &&
-        ss_peekx( ss, offset + 2 ) == L'l'  &&
-        ss_peekx( ss, offset + 3 ) == L'('  &&
-        (
-            isUrlChar( ss_peekx( ss, offset + 4 ) ) ||
-            isStringStart( ss, offset + 4 )         ||
-            isWhitespaceStart( ss, offset + 4 )
-        )
-    );
-}
+
 Token *parseUrl( Tokenizer *tokenizer ) {
     StatefulString *ss = tokenizer->ss_;
     assert( isUrlStart( ss, 0 ) );
@@ -399,24 +361,7 @@ Token *parseUrl( Tokenizer *tokenizer ) {
 //
 //  CDO/CDC
 //
-int isCDOStart( StatefulString *ss, unsigned int offset ) {
-    return (
-        ss_peekx( ss, offset     ) == L'<'  &&
-        ss_peekx( ss, offset + 1 ) == L'!'  &&
-        ss_peekx( ss, offset + 2 ) == L'-'  &&
-        ss_peekx( ss, offset + 3 ) == L'-'
-    );
-}
-int isCDCStart( StatefulString *ss, unsigned int offset ) {
-    return (
-        ss_peekx( ss, offset     ) == L'-'  &&
-        ss_peekx( ss, offset + 1 ) == L'-'  &&
-        ss_peekx( ss, offset + 2 ) == L'>'
-    );
-}
-int isSGMLCommentStart( StatefulString *ss, unsigned int offset ) {
-    return ( isCDOStart( ss, offset ) || isCDCStart( ss, offset ) );
-}
+
 Token *parseSGMLComment( Tokenizer *tokenizer ) {
     StatefulString *ss = tokenizer->ss_;
     assert( isCDOStart( ss, 0 ) || isCDCStart( ss, 0 ) );
@@ -442,12 +387,7 @@ Token *parseSGMLComment( Tokenizer *tokenizer ) {
 //
 //  Comments
 //
-int isCommentStart( StatefulString *ss, unsigned int offset ) {
-    return(
-        ss_peekx( ss, offset )      == L'/' &&
-        ss_peekx( ss, offset + 1 )  == L'*'
-    );
-}
+
 Token *parseComment( Tokenizer *tokenizer ) {
     StatefulString *ss = tokenizer->ss_;
     assert( isCommentStart( ss, 0 ) );

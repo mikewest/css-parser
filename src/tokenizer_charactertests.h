@@ -8,6 +8,8 @@
 int isNameStart( wchar_t c );
 // Name Character:      [a-zA-Z0-9] | '-' | '_' | nonascii | escape
 int isNameChar( wchar_t c );
+// Hex Character:       [0-9a-zA-Z]
+int isHex( wchar_t c );
 // String Character:    urlchar | #x20 | '\' nl
 int isStringChar( wchar_t c );
 // URL Character:       [#x9#x21#x23-#x26#x27-#x7E] | nonascii | escape

@@ -6,12 +6,18 @@
 
 int isNonAscii( wchar_t c ) {
     return (
-        ( c >= 0x80     &&  c <= 0xD7FF ) ||
-        ( c >= 0xE00    &&  c <= 0xFFFD ) ||
-        ( c >= 0x10000  &&  c <= 0x10FFFF )
+        ( c >= 0x80     &&  c <= 0xD7FF     ) ||
+        ( c >= 0xE00    &&  c <= 0xFFFD     ) ||
+        ( c >= 0x10000  &&  c <= 0x10FFFF   )
     );
 }
-
+int isHex( wchar_t c ) {
+    return (
+        ( c >= L'0'     &&  c <= L'9'       ) ||
+        ( c >= L'a'     &&  c <= L'f'       ) ||
+        ( c >= L'A'     &&  c <= L'F'       )
+    );
+}
 int isUrlChar( wchar_t c ) {
     return (
         (
