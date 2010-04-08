@@ -243,14 +243,22 @@ START_TEST( test_tokenizer_types_url_single )
 {
     //                                 Tokenize             Expected                Type
     fail_unless(    singleTokenString( L"url(/)",           L"url(/)",              URL ) );
+
     fail_unless(    singleTokenString( L"url(omg)",         L"url(omg)",            URL ) );
     fail_unless(    singleTokenString( L"url( omg)",        L"url( omg)",           URL ) );
     fail_unless(    singleTokenString( L"url(omg )",        L"url(omg )",           URL ) );
     fail_unless(    singleTokenString( L"url( omg )",       L"url( omg )",          URL ) );
+    
+    fail_unless(    singleTokenString( L"url(om\\EF g)",    L"url(om\\EF g)",       URL ) );
+    fail_unless(    singleTokenString( L"url( o\\EF mg)",   L"url( o\\EF mg)",      URL ) );
+    fail_unless(    singleTokenString( L"url(o\\EF mg )",   L"url(o\\EF mg )",      URL ) );
+    fail_unless(    singleTokenString( L"url( o\\EF mg )",   L"url( o\\EF mg )",    URL ) );
+    
     fail_unless(    singleTokenString( L"url('omg')",       L"url('omg')",          URL ) );
     fail_unless(    singleTokenString( L"url('omg' )",      L"url('omg' )",         URL ) );
     fail_unless(    singleTokenString( L"url( 'omg')",      L"url( 'omg')",         URL ) );
     fail_unless(    singleTokenString( L"url( 'omg' )",     L"url( 'omg' )",        URL ) );
+    
     fail_unless(    singleTokenString( L"url(\"omg\")",     L"url(\"omg\")",        URL ) );
     fail_unless(    singleTokenString( L"url(\"omg\" )",    L"url(\"omg\" )",       URL ) );
     fail_unless(    singleTokenString( L"url( \"omg\")",    L"url( \"omg\")",       URL ) );

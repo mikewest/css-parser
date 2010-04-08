@@ -271,7 +271,6 @@ Token *parseNumber( Tokenizer *tokenizer ) {
 //
 //  Url 
 //
-
 Token *parseUrl( Tokenizer *tokenizer ) {
     StatefulString *ss = tokenizer->ss_;
     assert( isUrlStart( ss, 0 ) );
@@ -313,10 +312,9 @@ Token *parseUrl( Tokenizer *tokenizer ) {
         } else {
             free( token );
         }
-    } else if ( isUrlChar( ss_peek( ss ) ) ) {
-        while ( isUrlChar( ss_peek( ss ) ) ) {
-            ss_getchar( ss );
-            length++;
+    } else if ( isUrlChar( ss_peek( ss ) ) || isUnicodeSequenceStart( ss, 0 ) ) {
+        while ( isUrlChar( ss_peek( ss ) ) || isUnicodeSequenceStart( ss, 0 ) ) {
+            length += processChar( ss );
         }
     } else {
         // ERROR:

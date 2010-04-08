@@ -78,8 +78,9 @@ int isUrlStart( StatefulString *ss, unsigned int offset ) {
         ss_peekx( ss, offset + 2 ) == L'l'  &&
         ss_peekx( ss, offset + 3 ) == L'('  &&
         (
-            isUrlChar( ss_peekx( ss, offset + 4 ) ) ||
-            isStringStart( ss, offset + 4 )         ||
+            isUrlChar( ss_peekx( ss, offset + 4 ) )     ||
+            isStringStart( ss, offset + 4 )             ||
+            isUnicodeSequenceStart( ss, offset + 4 )    ||
             isWhitespaceStart( ss, offset + 4 )
         )
     );
