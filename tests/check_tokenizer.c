@@ -133,6 +133,25 @@ START_TEST( test_tokenizer_types_identifier_single )
     fail_unless(    singleTokenString( L"identifieï",   L"identifieï",  IDENTIFIER ), "Unicode characters are valid at the end of identifiers." );
 }
 END_TEST
+START_TEST( test_tokenizer_types_function_single )
+{
+    //                                 Tokenize         Expected        Type 
+    fail_unless(    singleTokenString( L"identifier(",  L"identifier(",     FUNCTION ) );
+    
+    fail_unless(    singleTokenString( L"identifier1(", L"identifier1(",    FUNCTION ),  "Numbers are valid at the end of identifiers." );
+    fail_unless(    singleTokenString( L"ident1fier(",  L"ident1fier(",     FUNCTION ),  "Numbers are valid inside identifiers." );
+    fail_unless( notSingleTokenString( L"1dentifier(",  L"1dentifier(",     FUNCTION ),  "Numbers are _not_ valid at the beginning of identifiers." );
+
+    fail_unless(    singleTokenString( L"identi-fier(", L"identi-fier(",    FUNCTION ), "`-` is valid inside an identifier." );
+    fail_unless(    singleTokenString( L"-dentifier(",  L"-dentifier(",     FUNCTION ), "`-` is valid at the beginning of an identifier." );
+    fail_unless( notSingleTokenString( L"--dentifier(", L"--dentifier(",    FUNCTION ), "`--` is _not_ valid at the beginning of an identifier." );
+    fail_unless(    singleTokenString( L"identifier-(", L"identifier-(",    FUNCTION ), "`-` is valid at the end of an identifier." );
+
+    fail_unless(    singleTokenString( L"identïfier(",  L"identïfier(",     FUNCTION ), "Unicode characters are valid in identifiers." );
+    fail_unless(    singleTokenString( L"ïdentifier(",  L"ïdentifier(",     FUNCTION ), "Unicode characters are valid at the beginning of identifiers." );
+    fail_unless(    singleTokenString( L"identifieï(",  L"identifieï(",     FUNCTION ), "Unicode characters are valid at the end of identifiers." );
+}
+END_TEST
 START_TEST( test_tokenizer_types_atkeyword_single )
 {
     //                                 Tokenize         Expected        Type 
@@ -289,6 +308,7 @@ Suite * tokenizer_suite (void) {
     TCase *tc_types = tcase_create( "Token Types" );
     tcase_add_test( tc_types, test_tokenizer_types_whitespace_single );
     tcase_add_test( tc_types, test_tokenizer_types_identifier_single );
+    tcase_add_test( tc_types, test_tokenizer_types_function_single );
     tcase_add_test( tc_types, test_tokenizer_types_atkeyword_single );
     tcase_add_test( tc_types, test_tokenizer_types_hashkeyword_single );
     tcase_add_test( tc_types, test_tokenizer_types_string_single );

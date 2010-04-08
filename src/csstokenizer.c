@@ -176,6 +176,10 @@ Token *parseName( Tokenizer *tokenizer ) {
         ss_getchar( ss );
         length++;
     }
+    if ( ss_peek( ss ) == L'(' ) {
+        ss_getchar( ss );
+        length++;
+    }
     pos2    = ss->next_position;
     return token_new( ss_substr( ss, start, length ), length, NAME, pos1, pos2 ); 
 }
@@ -185,7 +189,7 @@ Token *parseIdentifier( Tokenizer *tokenizer ) {
 
     // Delegate to the less-strict `parseName`
     Token *t = parseName( tokenizer );
-    t->type = IDENTIFIER;
+    t->type = ( t->value[ t->length - 1 ] == L'(' ) ? FUNCTION : IDENTIFIER;
     return t;
 }
 /////////////////////////////////////
