@@ -3,10 +3,9 @@
 #include <assert.h>
 #include <wchar.h>
 #include <check.h>
-#include "../src/logging.h"
 #include "../src/statefulstring.h"
 #include "../src/token.h"
-#include "../src/csstokenizer.h"
+#include "../src/tokenizer.h"
 
 StatefulString *ss;
 Tokenizer *tzr;

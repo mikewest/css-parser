@@ -3,7 +3,6 @@
 #include <assert.h>
 #include <wchar.h>
 #include <check.h>
-#include "../src/logging.h"
 #include "../src/statefulstring.h"
 
 StatefulString *ss;

@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <wchar.h>
-#include "logging.h"
 #include "statefulstring.h"
 
 #define BASE_STRING_LENGTH  10240   //  Start with 10k, malloc from there.

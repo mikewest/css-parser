@@ -3,9 +3,7 @@
 #include <assert.h>
 #include <wchar.h>
 #include <check.h>
-#include "../src/logging.h"
 #include "../src/statefulstring.h"
-#include "../src/token.h"
 #include "../src/tokenizer_charactertests.h"
 #include "../src/tokenizer_statefulstringtests.h"
 

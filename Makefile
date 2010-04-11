@@ -4,36 +4,38 @@ BUILD_ROOT = ./build
 CHECK = /usr/local/lib/libcheck.a
 #CC = gcc -std=c99
 CC  = clang
-STATEFULSTRING_SRC = $(SRC)/statefulstring
-TOKEN_SRC = $(SRC)/token
-TOKENIZER_SRC = $(SRC)/csstokenizer
+CFLAGS = -g 
+
+STATEFULSTRING_OBJECTS = $(SRC)/statefulstring.o
+TOKEN_OBJECTS = $(STATEFULSTRING_OBJECTS) $(SRC)/token.o
+TOKENIZER_OBJECTS = $(TOKEN_OBJECTS) $(SRC)/tokenizer.o $(SRC)/tokenizer_charactertests.o $(SRC)/tokenizer_statefulstringtests.o
+
+.PHONY: all clean check
 
 all: clean check
 
 clean:
-	rm -rf $(BUILD_ROOT)/*
-
-statefulstring.out: $(STATEFULSTRING_SRC).h $(STATEFULSTRING_SRC).c
-token.out: $(TOKEN_SRC).h $(TOKEN_SRC).c
-tokenizer.out: $(TOKENIZER_SRC).h $(TOKENIZER_SRC).c
-
-checkstatefulstring: statefulstring.out $(TEST)/check_statefulstring.c
-	@$(CC) -g -o $(BUILD_ROOT)/checkstatefulstring $(STATEFULSTRING_SRC).c $(TEST)/check_statefulstring.c $(CHECK)
-	@$(BUILD_ROOT)/checkstatefulstring
-
-checktoken: statefulstring.out token.out $(TEST)/check_token.c
-	@$(CC) -g -o $(BUILD_ROOT)/checktoken $(STATEFULSTRING_SRC).c $(TOKEN_SRC).c $(TEST)/check_token.c $(CHECK)
-	@$(BUILD_ROOT)/checktoken
-
-checktokenizer: statefulstring.out token.out tokenizer.out $(TEST)/check_tokenizer.c
-	@$(CC) -g -o $(BUILD_ROOT)/checktokenizer $(STATEFULSTRING_SRC).c $(TOKEN_SRC).c $(TOKENIZER_SRC).c $(SRC)/tokenizer_charactertests.c $(SRC)/tokenizer_statefulstringtests.c $(TEST)/check_tokenizer.c $(CHECK)
-	@$(BUILD_ROOT)/checktokenizer
-
-scan:
-	~/Downloads/checker-238/scan-build --experimental-checks -o ./reports -V gcc -o $(BUILD_ROOT)/checktokenizer $(STATEFULSTRING_SRC).c $(TOKEN_SRC).c $(TOKENIZER_SRC).c $(SRC)/tokenizer_charactertests.c $(TEST)/check_tokenizer.c $(CHECK)
-
-analyze: clean
-	@$(CC) --analyze $(STATEFULSTRING_SRC).c $(TOKEN_SRC).c $(TOKENIZER_SRC).c $(SRC)/tokenizer_charactertests.c $(TEST)/check_tokenizer.c $(CHECK)
-	@rm -rf ./*.plist
+	@find . -name '*.o' | xargs rm -f
+	@rm -rf $(BUILD_ROOT)/*
 
 check: checkstatefulstring checktoken checktokenizer
+	@echo "-------------------------------------"
+	@echo "Finished compiling, now running tests"
+	@echo "-------------------------------------"
+	@$(BUILD_ROOT)/checkstatefulstring
+	@$(BUILD_ROOT)/checktoken
+	@$(BUILD_ROOT)/checktokenizer
+
+checkstatefulstring: $(STATEFULSTRING_OBJECTS) $(TEST)/check_statefulstring.o
+	@$(CC) $(CFLAGS) $(STATEFULSTRING_OBJECTS) $(TEST)/check_statefulstring.o $(CHECK) -o $(BUILD_ROOT)/$(@)
+
+checktoken: $(TOKEN_OBJECTS) $(TEST)/check_token.o
+	@$(CC) $(CFLAGS) $(TOKEN_OBJECTS) $(TEST)/check_token.o $(CHECK) -o $(BUILD_ROOT)/$(@)
+
+checktokenizer: $(TOKENIZER_OBJECTS) $(TEST)/check_tokenizer.o
+	@$(CC) $(CFLAGS) $(TOKENIZER_OBJECTS) $(TEST)/check_tokenizer.o $(CHECK) -o $(BUILD_ROOT)/$(@)
+
+analyze: clean
+	@find . -name '*.c' | xargs $(CC) --analyze
+	@rm -rf ./*.plist
+

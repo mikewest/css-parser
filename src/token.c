@@ -3,7 +3,6 @@
 #include <string.h>
 #include <assert.h>
 #include <wchar.h>
-#include "logging.h"
 #include "statefulstring.h"
 #include "token.h"
 
