@@ -306,6 +306,59 @@ START_TEST( test_tokenizer_types_operator_single )
     fail_unless(    singleTokenString( L"*=",       L"*=",      SUBSTRINGMATCH ) );
 }
 END_TEST
+//
+//  Multi-token Strings
+//
+typedef struct {
+    wchar_t*    value;
+    TokenType   type;
+} TokenDef;
+int processMultiTokenString( wchar_t *s, unsigned int numtokens, TokenDef *expected, unsigned int printFailure, unsigned int printSuccess ) {
+    int returnvalue = 0;
+
+    StatefulString *ss  = ss_fromstring( s );
+    Tokenizer *tzr      = tokenizer_new( ss );
+    Token *t1, *t2;
+    for ( int i = 0; i < numtokens; i++ ) {
+        t1 = tokenizer_next( tzr );
+        t2 = faketoken( ( expected[ i ] ).value, ( expected[ i ] ).type );
+        returnvalue += token_eq( t1, t2 );
+        if (
+            ( printFailure && !returnvalue ) ||
+            ( printSuccess && returnvalue )
+        ) {
+            wprintf( L"Token 1: `%S`\t(Length:%d,Error:%d,Type:%d)\n", t1->value, t1->length, ( t1->error != NULL ), t1->type );
+            if ( t1->error ) {
+                wprintf( L"-   ERROR: '%S'\n", ( t1->error )->message );
+            }
+            wprintf( L"Token 2: `%S`\t(Length:%d,Error:%d,Type:%d)\n", t2->value, t2->length, ( t2->error != NULL ), t2->type );
+            if ( t2->error ) {
+                wprintf( L"-   ERROR: '%S'\n", ( t2->error )->message );
+            }
+        }
+        token_free( t1 );
+        t1 = NULL;
+        token_free( t2 );
+        t2 = NULL;
+    }
+    tokenizer_free( tzr );
+    ss_free( ss );
+    return returnvalue == numtokens;
+}
+int multiTokenString( wchar_t *s, unsigned int numtokens, TokenDef *expected ) {
+    return processMultiTokenString( s, numtokens, expected, 1, 0 );
+}
+int notMultiTokenString( wchar_t *s, unsigned int numtokens, TokenDef *expected ) {
+    return !processMultiTokenString( s, numtokens, expected, 0, 1 );
+}
+
+START_TEST( test_tokenizer_types_identifier_multiple )
+{
+    TokenDef expected[] = { { L"id", IDENTIFIER }, { L" ", WHITESPACE }, { L"id", IDENTIFIER } };
+    fail_unless(    multiTokenString( L"id id", 3, expected ) );
+}
+END_TEST
+
 
 Suite * tokenizer_suite (void) {
     Suite *s = suite_create( "CSS Tokenizer" );
@@ -321,7 +374,9 @@ Suite * tokenizer_suite (void) {
     //
     //  Tokenization: Token Types
     //
-    TCase *tc_types = tcase_create( "Token Types" );
+    //  -   Single Token Strings
+    //
+    TCase *tc_types = tcase_create( "Token Types: Single Token Strings" );
     tcase_add_test( tc_types, test_tokenizer_types_whitespace_single );
     tcase_add_test( tc_types, test_tokenizer_types_identifier_single );
     tcase_add_test( tc_types, test_tokenizer_types_function_single );
@@ -335,6 +390,12 @@ Suite * tokenizer_suite (void) {
     tcase_add_test( tc_types, test_tokenizer_types_cdocdc_single );
     tcase_add_test( tc_types, test_tokenizer_types_comment_single );
     suite_add_tcase( s, tc_types );
+    //
+    //  -   Multi-Token Strings
+    //
+    TCase *tc_typem = tcase_create( "Token Types: Multi-Token Strings" );
+    tcase_add_test( tc_typem, test_tokenizer_types_identifier_multiple );
+    suite_add_tcase( s, tc_typem );
     return s;
 }
 
